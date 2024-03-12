@@ -1,0 +1,58 @@
+##
+## Template: Tracks HTML
+##
+<html>
+<head>
+	<title>Tracks</title>
+	<style type="text/css">
+	table, th, td {
+		border-collapse: collapse;
+	}
+	th {
+	    background-color: #A7C942;
+	    color: #FFFFFF;
+	    font-size: 1.4em;
+	    padding-bottom: 4px;
+	    padding-top: 5px;
+	    text-align: left;
+	}
+	tr.alt td {
+	    background-color: #EAF2D3;
+	    color: #000000;
+	}
+	th, td {
+	    border: 1px solid #98BF21;
+	    font-size: 1.2em;
+	    padding: 3px 7px 2px;
+	}
+	</style>
+<head>
+<body>
+
+	<table>
+		<tr>
+			<th>Track</th>
+			<th>Track No</th>
+			<th>Artist</th>
+			<th>Album</th>
+			<th>Medium</th>
+		</tr>
+#set( $rowClass="" )
+#foreach($track in $tracks.list())
+		<tr class="$rowClass">
+			<td>$track.getAsString($TRACK)</td>
+			<td>$track.getAsInteger($TRACK_NO)</td>
+			<td>$track.getAsString($ARTIST)</td>
+			<td>$track.getAsString($ALBUM)</td>
+			<td>$track.getAsString($MEDIUM)</td>
+		</tr>
+#if( $rowClass == "" )
+#set( $rowClass="alt" )
+#else
+#set( $rowClass="" )
+#end
+#end
+	</table>
+
+</body>
+</html>

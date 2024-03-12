@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition>
+	<command>lame</command>
+	<!-- high quality -->
+	<param>-h</param>
+	<!-- algorithm quality selection -->
+	<param>-q 2</param>
+	<!-- verbosity: disable VBR histogram display -->
+	<param>--nohist</param>
+	
+	<param id="mode.mono">-m</param>
+	<param id="mode.mono">m</param>
+	<param id="bitrate.constant">--cbr</param>
+	<param id="bitrate.constant">-b {0}</param>
+	<param id="bitrate.average">--abr</param>
+	<param id="bitrate.average">{0}</param>
+	<param id="bitrate.average.max">-B {0}</param>
+	<param id="bitrate.variable">--vbr-new</param>
+	<param id="bitrate.variable">-V {0}</param>
+	<param id="bitrate.variable.min">-b {0}</param>
+	<param id="bitrate.variable.max">-B {0}</param>
+	
+	<param id="id3.genre">--tg</param>
+	<param id="id3.genre">{0}</param>
+	<param id="id3.artist">--ta</param>
+	<param id="id3.artist">{0}</param>
+	<param id="id3.album">--tl</param>
+	<param id="id3.album">{0}</param>
+	<param id="id3.album.year">--ty</param>
+	<param id="id3.album.year">{0}</param>
+	<param id="id3.track">--tt</param>
+	<param id="id3.track">{0}</param>
+	<param id="id3.track.no">--tn</param>
+	<param id="id3.track.no">{0}</param>
+	
+	<param id="source">{0}</param>
+	<param id="target">{0}</param>
+</command-definition>

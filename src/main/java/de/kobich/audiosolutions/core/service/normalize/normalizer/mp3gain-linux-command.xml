@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition>
+	<command>mp3gain</command>
+	
+	<!-- Quiet mode: no status messages -->
+	<param>-q</param>
+	<!-- Preserve original file timestamp -->
+	<param>-p</param>
+	<!-- ignore clipping warning when applying gain -->
+	<param>-c</param>
+	
+	<!-- apply Album gain automatically -->
+	<param id="gain.album">-a</param>
+	<!-- apply Track gain automatically -->
+	<param id="gain.track">-r</param>
+	
+	<!-- automatically lower Track/Album gain to not clip audio -->
+	<param id="avoidclipping">-k</param>
+	
+	<!-- modify suggested dB gain by floating-point n -->
+	<!-- 90.0 - 89.0 = 1.0 -->
+	<param id="gain">-d</param>
+	<param id="gain">{0}</param>
+	
+	<param id="files">{*}</param>
+</command-definition>

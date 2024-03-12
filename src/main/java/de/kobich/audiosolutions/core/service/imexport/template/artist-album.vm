@@ -1,0 +1,22 @@
+##
+## Template: Artist / Album
+##
+#### get all artists
+#set( $artists=$tracks.list($ARTIST) )
+#foreach($artist in $artists)
+#### print artist
+$artist
+#### get albums for each artist
+#set( $albums=$tracks.filter($ARTIST, $artist).list($ALBUM) ) 
+#foreach($album in $albums)
+#### get disks for each album
+#set( $disks=$tracks.filter($ARTIST, $artist, $ALBUM, $album).list($DISK) )
+#if( $disks.isEmpty() )
+- $album
+#else
+#foreach($disk in $disks)
+- $album ($disk)
+#end
+#end
+#end
+#end

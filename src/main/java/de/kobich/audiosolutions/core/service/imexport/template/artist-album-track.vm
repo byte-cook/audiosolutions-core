@@ -1,0 +1,30 @@
+##
+## Template: Artist / Album / Track
+##
+#### get all artists
+#set( $artists=$tracks.list($ARTIST) )
+#foreach($artist in $artists)
+$artist
+#### get albums for each artist
+#set( $albums=$tracks.filter($ARTIST, $artist).list($ALBUM) )
+#foreach($album in $albums)
+#### get disks for each album
+#set( $disks=$tracks.filter($ARTIST, $artist, $ALBUM, $album).list($DISK) )
+#if( $disks.isEmpty() )
++ $album
+#### get all track on the given album
+#set( $albumTracks=$tracks.filter($ARTIST, $artist, $ALBUM, $album).list() )
+#foreach($albumTrack in $albumTracks)
+  + $albumTrack.getAsInteger($TRACK_NO) $albumTrack.get($TRACK)
+#end
+#else
+#foreach($disk in $disks)
++ $album ($disk)
+#set( $albumTracks=$tracks.filter($ARTIST, $artist, $ALBUM, $album, $DISK, $disk).list() )
+#foreach($albumTrack in $albumTracks)
+  + $albumTrack.getAsInteger($TRACK_NO) $albumTrack.get($TRACK)
+#end
+#end
+#end
+#end
+#end

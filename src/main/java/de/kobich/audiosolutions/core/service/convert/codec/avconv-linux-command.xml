@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition>
+	<command>avconv</command>
+	<!-- input file -->
+	<param>-i</param>
+	
+	<param id="source">{0}</param>
+	<param id="target">{0}</param>
+</command-definition>

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition>
+	<command>lame.exe</command>
+	<!-- high quality -->
+	<param>-h</param>
+	<!-- algorithm quality selection -->
+	<param>-q 2</param>
+	<!-- verbosity: disable VBR histogram display -->
+	<param>--nohist</param>
+	
+	<!-- decode to WAV -->
+	<param>--decode</param>
+	
+	<param id="source">{0}</param>
+	<param id="target">{0}</param>
+</command-definition>

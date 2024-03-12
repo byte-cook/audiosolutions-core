@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<command-definition>
+	<command>mp3check</command>
+	<param>-a</param>
+	
+	<param id="ignoreBitrate">--any-bitrate</param>
+	<param id="ignoreCrc">--any-crc</param>
+	<param id="ignoreEmphasis">--any-emphasis</param>
+	<param id="ignoreSampling">--any-sampling</param>
+	<param id="ignoreLayer">--any-layer</param>
+	<param id="ignoreMode">--any-mode</param>
+	<param id="ignoreVersion">--any-version</param>
+	
+	<param id="files">{*}</param>
+</command-definition>

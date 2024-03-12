@@ -3,6 +3,5 @@
 **.project
 **.settings
 **/mp3plugin.jar
-**/audiosolutions_all/
-**/audiosolutions/
+**/8.0/audiosolutions/
 *.log
