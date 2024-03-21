@@ -41,11 +41,6 @@ public class TestUtils {
 		return fd;
 	}
 	
-	public static AudioFileDescriptor createAudioFileDescriptor(String fileName, AudioDataBuilder audioDataBuilder) {
-		FileDescriptor fd = new FileDescriptor(new File(fileName), fileName);
-		return new AudioFileDescriptor(fd, audioDataBuilder.buildMap());
-	}
-	
 	public static AudioDataChangeBuilder createAudioDataChangeBuilder(String fileName) {
 		FileDescriptor fd = new FileDescriptor(new File(fileName), fileName);
 		return AudioDataChange.builder().fileDescriptor(fd);
