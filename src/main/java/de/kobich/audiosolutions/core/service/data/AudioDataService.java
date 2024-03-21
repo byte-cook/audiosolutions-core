@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.Nullable;
@@ -23,9 +22,7 @@ import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioDataChange;
 import de.kobich.audiosolutions.core.service.AudioDataChange.AudioDataChangeBuilder;
 import de.kobich.audiosolutions.core.service.AudioException;
-import de.kobich.audiosolutions.core.service.AudioFileDescriptor;
 import de.kobich.audiosolutions.core.service.AudioServiceUtils;
-import de.kobich.audiosolutions.core.service.AudioState;
 import de.kobich.audiosolutions.core.service.mp3.id3.IFileID3TagService;
 import de.kobich.audiosolutions.core.service.mp3.id3.MP3ID3TagType;
 import de.kobich.audiosolutions.core.service.mp3.id3.ReadID3TagResponse;
@@ -55,84 +52,7 @@ public class AudioDataService {
 
 	/**
 	 * Adds audio data to audio files (e.g. set Track/Album/Artist name)
-	 * @param request the request
-	 * @return audio data
 	 */
-	@Deprecated
-	public void addAudioData(Set<AudioFileDescriptor> files, IServiceProgressMonitor monitor) {
-		ProgressSupport support = new ProgressSupport(monitor);
-		support.monitorBeginTask(new ProgressData("Set Audio Data...", files.size()));
-
-//		List<FileDescriptor> fileDescriptorList = new ArrayList<FileDescriptor>(fileDescriptors);
-//		Collections.sort(fileDescriptorList, new DefaultFileDescriptorComparator());
-
-		for (AudioFileDescriptor file : files) {
-			FileDescriptor fileDescriptor = file.getFileDescriptor();
-			Map<AudioAttribute, String> audioAttributes = file.getAudioDataValues();
-			if (fileDescriptor == null) {
-				continue;
-			}
-			AudioData audioData = null;
-
-			// monitor message
-			support.monitorSubTask(new ProgressData("Add audio data for: " + fileDescriptor.getFileName(), 1));
-
-			if (fileDescriptor.hasMetaData(AudioData.class)) { 
-				audioData = fileDescriptor.getMetaData(AudioData.class);
-			}
-			else {
-				audioData = new AudioData();
-				fileDescriptor.setMetaData(audioData);
-			}
-
-			boolean modified = false;
-			// set audio attributes
-			for (AudioAttribute attribute : AudioAttribute.values()) {
-				boolean remove = false;
-				String value = null;
-				// values that are changed
-				if (audioAttributes.containsKey(attribute)) {
-					value = audioAttributes.get(attribute);
-					if (value == null) {
-						if (attribute.isRequired()) {
-							value = AudioData.DEFAULT_VALUE;
-						}
-						else {
-							remove = true;
-						}
-					}
-				}
-				// values that remain
-				else if (audioData.hasAttribute(attribute)) {
-					value = audioData.getAttribute(attribute);
-				}
-				
-				// attribute is required
-				if (attribute.isRequired() && StringUtils.isBlank(value)) {
-					value = AudioData.DEFAULT_VALUE;
-				}
-				// if value is not null (e.g. no required attribute)
-				if (remove) {
-					if (!audioData.equalsAttribute(attribute, value)) {
-						modified = true;
-						audioData.removeAttribute(attribute);
-					}
-				}
-				else if (value != null) {
-					if (!audioData.equalsAttribute(attribute, value)) {
-						modified = true;
-						audioData.setAttribute(attribute, value);
-					}
-				}
-			}
-			if (modified) {
-				updateAudioDataState(audioData);
-			}
-		}
-		
-		support.monitorEndTask(new ProgressData("Audio data successfully set"));
-	}
-	
 	public Set<FileDescriptor> applyChanges(Set<FileDescriptor> fileDescriptors, AudioDataChange change, IServiceProgressMonitor monitor) {
 		ProgressSupport support = new ProgressSupport(monitor);
 		support.monitorBeginTask(new ProgressData("Set Audio Data...", fileDescriptors.size()));
@@ -336,22 +256,6 @@ public class AudioDataService {
 		support.monitorEndTask("Import directory changed");
 		
 		return result.createFileDescriptorResult();
-	}
-	
-	/**
-	 * Updates the audio data state
-	 * @param audioData
-	 */
-	private void updateAudioDataState(AudioData audioData) {
-		for (AudioAttribute attribute : AudioAttribute.getRequiredAttributes()) {
-			if (!audioData.hasAttribute(attribute) || audioData.getAttribute(attribute).equals(AudioData.DEFAULT_VALUE)) {
-				AudioState state = audioData.getState().isTransient() ? AudioState.TRANSIENT_INCOMPLETE : AudioState.PERSISTENT_MODIFIED_INCOMPLETE;
-				audioData.setState(state);
-				return;
-			}
-		}
-		AudioState state = audioData.getState().isTransient() ? AudioState.TRANSIENT : AudioState.PERSISTENT_MODIFIED;
-		audioData.setState(state);
 	}
 	
 }
