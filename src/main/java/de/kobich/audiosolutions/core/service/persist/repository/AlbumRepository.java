@@ -1,6 +1,7 @@
 package de.kobich.audiosolutions.core.service.persist.repository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.Modifying;
@@ -29,6 +30,8 @@ public interface AlbumRepository extends CrudRepository<Album, Long> {
 
 //	Optional<Album> findFirstByNameAndMedium(String name, Medium medium);
 	List<Album> findAllByNameAndMedium(String name, Medium medium);
+	
+	Optional<Album> findByIdAndNameAndMedium(Long id, String name, Medium medium);
 	
 	<T> List<T> findAllByNameLikeIgnoreCaseOrderByName(String name, Class<T> type);
 	

@@ -22,6 +22,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.google.common.collect.Lists;
 
+import de.kobich.audiosolutions.core.service.AlbumIdentity;
 import de.kobich.audiosolutions.core.service.AudioAttribute;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
@@ -166,6 +167,7 @@ public class AudioPersistenceService {
 						// 5. track
 						Track track = entityCache.getOrCreateTrack(fileDescriptor, audioData, artist, album, genre);
 						audioData.setAsPersisted(track.getId());
+						audioData.setAlbumIdentity(AlbumIdentity.create(album));
 						
 						result.add(fileDescriptor);
 						break;

@@ -221,8 +221,20 @@ public class AudioEntityCache {
 		 */
 		private Optional<Album> findSuitableAlbum(AlbumKey key) throws IOException {
 			if (key.albumIdentifier != null) {
-				// return no candidate because the load method is only called once per key
-				return Optional.empty();
+				Optional<Long> idOpt = key.albumIdentifier.getPersistentId();
+				// if albumIdentifier refers to an already persisted album
+				if (idOpt.isPresent()) {
+					// reuse existing album if it can be found (all unique keys must be the same)
+					// if no album can be found, the album name or the medium has been changed
+					Optional<Album> albumOpt = albumRepository.findByIdAndNameAndMedium(idOpt.get(), key.name, key.medium);
+					if (albumOpt.isPresent()) {
+						return albumOpt;
+					}
+				}
+				else {
+					// return no candidate because the load method is only called once per key
+					return Optional.empty();
+				}
 			}
 
 			/**

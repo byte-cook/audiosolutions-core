@@ -11,7 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
-import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -32,9 +32,9 @@ import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioDataBuilder;
 import de.kobich.audiosolutions.core.service.AudioDataChange;
 import de.kobich.audiosolutions.core.service.AudioException;
-import de.kobich.audiosolutions.core.service.AudioFileDescriptor;
 import de.kobich.audiosolutions.core.service.AudioSolutionsTestSpringConfig;
 import de.kobich.audiosolutions.core.service.AudioState;
+import de.kobich.audiosolutions.core.service.RatingType;
 import de.kobich.audiosolutions.core.service.TestUtils;
 import de.kobich.audiosolutions.core.service.data.AudioDataService;
 import de.kobich.audiosolutions.core.service.persist.domain.Album;
@@ -80,21 +80,6 @@ public class AudioPersistenceServiceTest {
 	@Test
 	void isEmpty() throws Exception {
 		assertEquals(0, persistenceService.getCount(AudioAttribute.TRACK));
-	}
-	
-	@Test
-	void insert1withEmptyPublication() throws Exception {
-		AudioFileDescriptor file1 = TestUtils.createAudioFileDescriptor("/cdrom/Rolling Stones/memory motel.mp3", AudioDataBuilder.builder().artist("Rolling Stones").track("memory motel"));
-		file1.getAudioDataValues().put(AudioAttribute.ALBUM_PUBLICATION, "");
-		Set<AudioFileDescriptor> audioFiles = Set.of(file1);
-		dataService.addAudioData(audioFiles, PROGRESS_MONITOR);
-		List<FileDescriptor> files = audioFiles.stream().map(AudioFileDescriptor::getFileDescriptor).toList();
-		persistenceService.persist(files, PROGRESS_MONITOR);
-		assertEquals(1, persistenceService.getCount(AudioAttribute.TRACK));
-		assertEquals(1, persistenceService.getCount(AudioAttribute.ARTIST));
-		AudioData ad = file1.getFileDescriptor().getMetaData(AudioData.class);
-		assertNotNull(ad);
-		assertTrue(ad.getAlbumDescription().isEmpty());
 	}
 
 	@Test
@@ -525,7 +510,7 @@ public class AudioPersistenceServiceTest {
 				// The albumIdentity must be set here. Otherwise, the album with id 3 is used for both files 
 				// because both parent paths are available for this album.
 				// 
-				// By setting the albumIdentity for files in different folders, these folders are now linked together in an album. 
+				// By setting the albumIdentity for files in different folders, these folders are now linked together in one album. 
 				// To separate the folders from each other again, a new albumIdentity must be explicitly assigned. 
 				AudioDataChange.builder().fileDescriptor(file1).albumIdentityRemove(true).albumIdentity(AlbumIdentity.createNew()).build(),
 				AudioDataChange.builder().fileDescriptor(file2).albumIdentityRemove(true).build());
@@ -591,7 +576,43 @@ public class AudioPersistenceServiceTest {
 		assertEquals(4, persistenceService.getCount(AudioAttribute.TRACK));
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
 	}
-	
+
+	@Test
+	void testAlbumIdentityAttributes() throws Exception {
+		final String ALBUM = "Best Of";
+		FileDescriptor file1 = TestUtils.createFileDescriptor("/cdrom/Rolling Stones/Best Of/01-start me up.mp3");
+		FileDescriptor file2 = TestUtils.createFileDescriptor("/cdrom/Rolling Stones/Best Of/02-satisfaction.mp3");
+
+		Set<AudioDataChange> changes = Set.of(
+				AudioDataChange.builder().fileDescriptor(file1).artist(TestUtils.STONES).album(ALBUM).track("start me up").build(),
+				AudioDataChange.builder().fileDescriptor(file2).artist(TestUtils.STONES).album(ALBUM).track("satisfaction").build());
+		Set<FileDescriptor> files = dataService.applyChanges(changes, PROGRESS_MONITOR);
+		assertTrue(files.iterator().next().getMetaDataOptional(AudioData.class).get().getAlbumIdentifier().isEmpty());
+		files = persistenceService.persist(files, PROGRESS_MONITOR);
+		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
+		// check after persist
+		Optional<AlbumIdentity> aidAfterPersistOpt = files.iterator().next().getMetaDataOptional(AudioData.class).get().getAlbumIdentifier();
+		assertTrue(aidAfterPersistOpt.isPresent());
+		assertTrue(aidAfterPersistOpt.get().getPersistentId().isPresent());
+		
+		// check after search
+		files = searchService.search(AudioSearchQuery.builder().build(), PROGRESS_MONITOR);
+		for (FileDescriptor fd : files) {
+			AudioData ad = fd.getMetaDataOptional(AudioData.class).get();
+			AlbumIdentity aidAfterSearch = ad.getAlbumIdentifier().get();
+			assertTrue(aidAfterSearch.getPersistentId().isPresent());
+		}
+		
+		// change artist
+		changes = Set.of(AudioDataChange.builder().fileDescriptor(file1).artist("Other artist").build());
+		files = dataService.applyChanges(changes, PROGRESS_MONITOR);
+		persistenceService.persist(files, PROGRESS_MONITOR);
+		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
+		aidAfterPersistOpt = files.iterator().next().getMetaDataOptional(AudioData.class).get().getAlbumIdentifier();
+		assertTrue(aidAfterPersistOpt.isPresent());
+		assertTrue(aidAfterPersistOpt.get().getPersistentId().isPresent());
+	}
+
 	@Test
 	void testAlbumIdentity() throws Exception {
 		final String album = "Best Of";
@@ -672,6 +693,25 @@ public class AudioPersistenceServiceTest {
 	}
 
 	@Test
+	void testAlbumIdentityAfterPersist() throws Exception {
+		FileDescriptor file1 = TestUtils.createFileDescriptor("/cdrom/Rolling Stones/Best Of/01-start me up.mp3");
+		FileDescriptor file2 = TestUtils.createFileDescriptor("/cdrom/Rolling Stones/Best Of/02-satisfaction.mp3");
+
+		Set<AudioDataChange> changes = Set.of(
+				AudioDataChange.builder().fileDescriptor(file1).artist(TestUtils.STONES).album(TestUtils.BEGGARS_BANQUET).track("start me up").build(),
+				AudioDataChange.builder().fileDescriptor(file2).artist(TestUtils.STONES).album(TestUtils.BEGGARS_BANQUET).track("satisfaction").build());
+		Set<FileDescriptor> files = dataService.applyChanges(changes, PROGRESS_MONITOR);
+		files = persistenceService.persist(files, PROGRESS_MONITOR);
+		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
+		
+		// change artist, but only for one file
+		changes = Set.of(AudioDataChange.builder().fileDescriptor(file1).artist("Other artist").build());
+		files = dataService.applyChanges(changes, PROGRESS_MONITOR);
+		persistenceService.persist(files, PROGRESS_MONITOR);
+		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
+	}
+
+	@Test
 	void testSameAlbumIdentifierAfterSearch() throws Exception {
 		final String album = "Best Of";
 		FileDescriptor file1 = TestUtils.createFileDescriptor("/cdrom/Rolling Stones/Best Of/01-start me up.mp3");
@@ -711,12 +751,20 @@ public class AudioPersistenceServiceTest {
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
 		assertEquals(1, persistenceService.getCount(AudioAttribute.ARTIST));
 		
-		// search for these files and change medium: album count should remain the same
+		// search for these files and change rating: album count should remain the same
 		Set<FileDescriptor> foundedFiles = searchService.search(AudioSearchQuery.builder().build(), PROGRESS_MONITOR);
-		files = dataService.applyChanges(foundedFiles, AudioDataChange.builder().medium("hdd2").build(), PROGRESS_MONITOR);
+		files = dataService.applyChanges(foundedFiles, AudioDataChange.builder().rating(RatingType.HIGH)/*.medium("hdd2")*/.build(), PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(2, persistenceService.getCount(AudioAttribute.TRACK));
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
+		assertEquals(1, persistenceService.getCount(AudioAttribute.ARTIST));
+
+		// search for these files and change medium: medium is part of the unqiue key, thus the original album cannot be found -> default impl is used
+		foundedFiles = searchService.search(AudioSearchQuery.builder().build(), PROGRESS_MONITOR);
+		files = dataService.applyChanges(foundedFiles, AudioDataChange.builder().medium("hdd2").build(), PROGRESS_MONITOR);
+		persistenceService.persist(files, PROGRESS_MONITOR);
+		assertEquals(2, persistenceService.getCount(AudioAttribute.TRACK));
+		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
 		assertEquals(1, persistenceService.getCount(AudioAttribute.ARTIST));
 	}
 	

@@ -18,6 +18,7 @@ import de.kobich.audiosolutions.core.service.persist.domain.Track;
 import de.kobich.commons.utils.CloneUtils;
 import de.kobich.component.file.IMetaData;
 import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -34,6 +35,7 @@ public class AudioData implements IMetaData {
 	private PropertyChangeSupport support;
 	private Long trackId;
 	private Map<AudioAttribute, String> attributes;
+	@Getter
 	private AudioState state;
 	
 	@Setter
@@ -59,7 +61,7 @@ public class AudioData implements IMetaData {
 			String dateText = AudioAttributeUtils.convert2String(track.getAlbum().getPublication());
 			this.setAttribute(AudioAttribute.ALBUM_PUBLICATION, dateText);
 		}
-		this.setAlbumIdentity(AlbumIdentity.create(track));
+		this.setAlbumIdentity(AlbumIdentity.create(track.getAlbum()));
 		// artist
 		this.setAttribute(AudioAttribute.ARTIST, track.getArtist().getName());
 		this.setArtistDescription(track.getArtist().getDescription());
@@ -213,16 +215,9 @@ public class AudioData implements IMetaData {
 	}
 
 	/**
-	 * @return the state
-	 */
-	public AudioState getState() {
-		return state;
-	}
-
-	/**
 	 * @param state the state to set
 	 */
-	public void setState(AudioState state) {
+	private void setState(AudioState state) {
 		if (this.state == null || !this.state.equals(state)) {
 			support.firePropertyChange(AUDIO_STATE_PROP, getState(), state);
 			this.state = state;
