@@ -3,6 +3,7 @@ package de.kobich.audiosolutions.core.service.search;
 import java.io.File;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.annotation.Nullable;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import de.kobich.audiosolutions.core.service.AudioAttribute;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
+import de.kobich.audiosolutions.core.service.persist.domain.Album;
 import de.kobich.audiosolutions.core.service.persist.domain.Artist;
 import de.kobich.audiosolutions.core.service.persist.domain.Medium;
 import de.kobich.audiosolutions.core.service.persist.domain.Track;
@@ -168,6 +170,15 @@ public class AudioSearchService {
 			mediums = mediumRepository.findAll();
 		}
 		return mediums;
+	}
+	
+	/**
+	 * Returns an album by id
+	 * @param albumId
+	 * @return
+	 */
+	public Optional<Album> searchAlbum(Long albumId) {
+		return albumRepository.findById(albumId);
 	}
 
 	/**
