@@ -146,14 +146,12 @@ public class AudioSearchService {
 	 * @return
 	 */
 	public List<Artist> searchArtists(@Nullable String artistName) {
-		List<Artist> artists = null;
 		if (StringUtils.isNotBlank(artistName)) {
-			artists = artistRepository.findAllByNameLikeIgnoreCase(SQLUtils.escapeLikeParam(artistName, true, true));
+			return artistRepository.findAllByNameLikeIgnoreCase(SQLUtils.escapeLikeParam(artistName, true, true));
 		}
 		else {
-			artists = artistRepository.findAll();
+			return artistRepository.findAll();
 		}
-		return artists;
 	}
 
 	/**
@@ -162,14 +160,12 @@ public class AudioSearchService {
 	 * @return
 	 */
 	public List<Medium> searchMediums(@Nullable String mediumName) {
-		List<Medium> mediums = null;
 		if (StringUtils.isNotBlank(mediumName)) {
-			mediums = mediumRepository.findAllByNameLikeIgnoreCase(SQLUtils.escapeLikeParam(mediumName, true, true));
+			return mediumRepository.findAllByNameLikeIgnoreCase(SQLUtils.escapeLikeParam(mediumName, true, true));
 		}
 		else {
-			mediums = mediumRepository.findAll();
+			return mediumRepository.findAll();
 		}
-		return mediums;
 	}
 	
 	/**
