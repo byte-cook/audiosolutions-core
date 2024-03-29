@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -75,7 +77,7 @@ public class AudioPersistenceService {
 	 * @throws AudioException
 	 */
 	@Transactional(propagation = Propagation.NOT_SUPPORTED)
-	public Set<FileDescriptor> persist(Collection<FileDescriptor> fileDescriptors, IServiceProgressMonitor monitor) throws AudioException {
+	public Set<FileDescriptor> persist(Collection<FileDescriptor> fileDescriptors, @Nullable IServiceProgressMonitor monitor) throws AudioException {
 		final AudioEntityCache entityCache = entityCacheFactory.createCache();
 		Map<FileDescriptor, AudioData> backupMap = new HashMap<>();
 		
@@ -84,8 +86,8 @@ public class AudioPersistenceService {
 		
 		ProgressSupport progressSupport = new ProgressSupport(monitor);
 		progressSupport.monitorBeginTask(new ProgressData("Saving audio data...", fileDescriptorList.size()));
+		TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 		try {
-			TransactionTemplate transactionTemplate = new TransactionTemplate(transactionManager);
 			
 			Set<FileDescriptor> result = new HashSet<>();
 			// split bulk inserts into partitions: https://hsqldb.org/doc/2.0/guide/deployment-chapt.html#dec_bulk_operations
@@ -105,15 +107,6 @@ public class AudioPersistenceService {
 				backupMap.clear();
 			}
 			
-			transactionTemplate.executeWithoutResult(status -> {
-				progressSupport.monitorSubTask("Update albums...", 0);
-				updateAlbumArtist(entityCache);
-			});
-			transactionTemplate.executeWithoutResult(status -> {
-				progressSupport.monitorSubTask("Removing orphaned data...", 0);
-				deleteOrphanedData();
-			});
-
 			progressSupport.monitorEndTask("Audio data saved");
 			return result;
 		}
@@ -131,6 +124,14 @@ public class AudioPersistenceService {
 				throw appExc;
 			}
 			throw new AudioException(AudioException.INTERNAL);
+		}
+		finally {
+			transactionTemplate.executeWithoutResult(status -> {
+				updateAlbumArtist(entityCache);
+			});
+			transactionTemplate.executeWithoutResult(status -> {
+				deleteOrphanedData();
+			});
 		}
 	}
 	

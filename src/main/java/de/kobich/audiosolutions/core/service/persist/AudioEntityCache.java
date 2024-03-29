@@ -222,38 +222,25 @@ public class AudioEntityCache {
 		private Optional<Album> findSuitableAlbum(AlbumKey key) throws IOException {
 			if (key.albumIdentifier != null) {
 				Optional<Long> idOpt = key.albumIdentifier.getPersistentId();
-				// if albumIdentifier refers to an already persisted album
+				// if: albumIdentifier refers to an already persisted album
 				if (idOpt.isPresent()) {
 					// reuse existing album if it can be found (all unique keys must be the same)
-					// if no album can be found, the album name or the medium has been changed
 					Optional<Album> albumOpt = albumRepository.findByIdAndNameAndMedium(idOpt.get(), key.name, key.medium);
 					if (albumOpt.isPresent()) {
 						return albumOpt;
 					}
+					// if no album can be found, the album name or the medium has been changed
+					// -> use default approach
 				}
+				// else: albumIdentifier is set manually be the user
 				else {
 					// return no candidate because the load method is only called once per key
 					return Optional.empty();
 				}
 			}
-
-			/**
-			 * Approach 1 (not used): Create a new album for each artist. 
-			 * albumName + medium + artist are unique
-			 * 
-			 * This approach is no longer used because album collections are not supported at all.
-			 */
-//			List<Track> tracks = trackRepository.findByArtistAndAlbumAndMedium(key.artist, key.name, key.medium, page).getContent();
-//			if (!tracks.isEmpty()) {
-//				Track track = tracks.get(0);
-//				// album artist must be available because albumIdentifier is not set
-//				if (track.getAlbum().getArtist().isPresent()) {
-//					return Optional.of(track.getAlbum());
-//				}
-//			}
 			
 			/**
-			 * Approach 2: All files in the same folder belong to the same album.
+			 * Default approach: All files in the same folder belong to the same album.
 			 * albumName + medium + parent path are unique
 			 */
 			AudioData audioData = key.fileDescriptor.getMetaData(AudioData.class);

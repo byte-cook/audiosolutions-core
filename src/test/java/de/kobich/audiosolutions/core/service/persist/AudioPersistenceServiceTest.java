@@ -11,6 +11,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -221,7 +222,7 @@ public class AudioPersistenceServiceTest {
 		final int COUNT = 1100;
 		for (int i = 0; i < COUNT; ++i) {
 			String iFileName = String.format("track %04d.mp3", i);
-			changes.add(TestUtils.createAudioDataChangeBuilder("/cdrom/Rolling Stones/"+iFileName).artist("Rolling Stones").track(iFileName).build());
+			changes.add(TestUtils.createAudioDataChangeBuilder("/cdrom/Rolling Stones/"+iFileName).artist("Other artist").track(iFileName).build());
 		}
 		Set<FileDescriptor> bulkFiles = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		assertThrows(AudioException.class, () -> persistenceService.persist(bulkFiles, PROGRESS_MONITOR));
@@ -233,6 +234,10 @@ public class AudioPersistenceServiceTest {
 		FileDescriptor file1077 = bulkFiles.stream().filter(f -> f.getFileName().equals("track 1077.mp3")).findFirst().orElse(null);
 		assertNotNull(file1077);
 		assertEquals(AudioState.TRANSIENT_INCOMPLETE, file1077.getMetaData(AudioData.class).getState());
+		
+		List<Album> albums = this.textSearchService.search("", COUNT, PROGRESS_MONITOR).getAlbums();
+		assertEquals(1, albums.size());
+		assertTrue(albums.get(0).getArtist().isEmpty());
 	}
 	
 	@Test
