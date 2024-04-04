@@ -2,7 +2,6 @@ package de.kobich.audiosolutions.core.service.data;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -31,6 +30,7 @@ import de.kobich.audiosolutions.core.service.TestUtils;
 import de.kobich.audiosolutions.core.service.mp3.id3.FileID3TagServiceTest;
 import de.kobich.audiosolutions.core.service.mp3.id3.ID3TagVersion;
 import de.kobich.audiosolutions.core.service.mp3.id3.IFileID3TagService;
+import de.kobich.audiosolutions.core.service.mp3.id3.MP3ID3TagType;
 import de.kobich.audiosolutions.core.service.persist.AudioPersistenceService;
 import de.kobich.commons.monitor.progress.IServiceProgressMonitor;
 import de.kobich.commons.monitor.progress.SysoutProgressMonitor;
@@ -205,11 +205,16 @@ public class AudioDataServiceTest {
 		FileDescriptor fd = new FileDescriptor(file, "/Rolling Stones/Beggars Banquet/07-sympathy for the devil.mp3");
 		AudioFileResult result = id3TagService.writeID3TagsByStructure(Set.of(fd), ID3TagVersion.ALL, "/<artist>/<album>/<trackNo>-<track>.mp3", PROGRESS_MONITOR);
 		Set<FileDescriptor> files = result.getSucceededFiles();
-		dataService.addAudioDataByID3Tags(files, null);
 		assertFalse(files.isEmpty());
-		fd = files.iterator().next();
-		AudioData ad = fd.getMetaData(AudioData.class);
-		assertNotNull(ad);
+		// set for single id3 tag
+		dataService.addAudioDataByID3Tags(files, Set.of(MP3ID3TagType.ALBUM), null);
+		AudioData ad = fd.getMetaDataOptional(AudioData.class).orElseThrow();
+		assertEquals(AudioData.DEFAULT_VALUE, ad.getArtist().orElse(null));
+		assertEquals("Beggars Banquet", ad.getAlbum().orElse(null));
+		assertEquals(AudioData.DEFAULT_VALUE, ad.getTrack().orElse(null));
+		assertTrue(ad.getTrackNo().isEmpty());
+		// set for all id3 tags
+		dataService.addAudioDataByID3Tags(files, Set.of(), null);
 		assertEquals("Rolling Stones", ad.getArtist().orElse(null));
 		assertEquals("Beggars Banquet", ad.getAlbum().orElse(null));
 		assertEquals("sympathy for the devil", ad.getTrack().orElse(null));
