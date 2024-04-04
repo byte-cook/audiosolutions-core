@@ -15,7 +15,7 @@ import de.kobich.audiosolutions.core.service.AudioFileDescriptorComparator;
 import de.kobich.audiosolutions.core.service.AudioFileResult;
 import de.kobich.audiosolutions.core.service.AudioFormat;
 import de.kobich.audiosolutions.core.service.AudioFormatUtil;
-import de.kobich.audiosolutions.core.service.AudioResultSupport;
+import de.kobich.audiosolutions.core.service.AudioResultBuilder;
 import de.kobich.audiosolutions.core.service.AudioServiceUtils;
 import de.kobich.audiosolutions.core.service.CommandLineStreams;
 import de.kobich.audiosolutions.core.service.convert.codec.IAudioCodec;
@@ -76,7 +76,7 @@ public class AudioConversionService {
 			}
 
 			// convert each file
-			AudioResultSupport result = new AudioResultSupport();
+			AudioResultBuilder result = new AudioResultBuilder();
 			
 			Collections.sort(supportedFiles, new AudioFileDescriptorComparator());
 			for (FileDescriptor fileDescriptor : supportedFiles) {
@@ -96,7 +96,8 @@ public class AudioConversionService {
 					nestedStreams.close();
 				}
 			}
-			return result.createAudioFileResult(fileDescriptors);
+			result.setMissingAsFailed(fileDescriptors);
+			return result.build();
 		}
 		catch (AudioException exc) {
 			throw exc;

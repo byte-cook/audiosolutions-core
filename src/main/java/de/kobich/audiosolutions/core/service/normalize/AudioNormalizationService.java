@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.AudioFileDescriptorComparator;
 import de.kobich.audiosolutions.core.service.AudioFileResult;
-import de.kobich.audiosolutions.core.service.AudioResultSupport;
+import de.kobich.audiosolutions.core.service.AudioResultBuilder;
 import de.kobich.audiosolutions.core.service.AudioServiceUtils;
 import de.kobich.audiosolutions.core.service.CommandLineStreams;
 import de.kobich.audiosolutions.core.service.normalize.normalizer.IAudioNormalizer;
@@ -68,7 +68,7 @@ public class AudioNormalizationService {
 				}
 			}
 			
-			AudioResultSupport result = new AudioResultSupport();
+			AudioResultBuilder result = new AudioResultBuilder();
 			try {
 				if (!streams.hasCommandDefinitionStream()) {
 					InputStream definitionStream = tool.getInternalDefinitionStream(normalizer.getClass());
@@ -84,7 +84,8 @@ public class AudioNormalizationService {
 			finally {
 				streams.close();
 			}
-			return result.createAudioFileResult(fileDescriptors);
+			result.setMissingAsFailed(fileDescriptors);
+			return result.build();
 		}
 		catch (AudioException exc) {
 			throw exc;

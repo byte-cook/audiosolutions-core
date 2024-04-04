@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.AudioFileDescriptorComparator;
 import de.kobich.audiosolutions.core.service.AudioFileResult;
-import de.kobich.audiosolutions.core.service.AudioResultSupport;
+import de.kobich.audiosolutions.core.service.AudioResultBuilder;
 import de.kobich.audiosolutions.core.service.AudioServiceUtils;
 import de.kobich.audiosolutions.core.service.CommandLineStreams;
 import de.kobich.audiosolutions.core.service.check.checker.IAudioFileChecker;
@@ -63,7 +63,7 @@ public class AudioCheckService {
 		}
 		
 		// check files
-		AudioResultSupport result = new AudioResultSupport();
+		AudioResultBuilder result = new AudioResultBuilder();
 		try {
 			if (!streams.hasCommandDefinitionStream()) {
 				InputStream definitionStream = tool.getInternalDefinitionStream(checker.getClass());
@@ -79,7 +79,8 @@ public class AudioCheckService {
 		finally {
 			streams.close();
 		}
-		return result.createAudioFileResult(fileDescriptors);
+		result.setMissingAsFailed(fileDescriptors);
+		return result.build();
 	}
 	
 	private IAudioFileChecker findChecker(CommandLineTool tool) throws AudioException {

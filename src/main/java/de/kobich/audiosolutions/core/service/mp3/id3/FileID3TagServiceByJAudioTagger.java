@@ -42,7 +42,7 @@ import de.kobich.audiosolutions.core.service.AudioAttribute2StructureVariableMap
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.AudioFileResult;
-import de.kobich.audiosolutions.core.service.AudioResultSupport;
+import de.kobich.audiosolutions.core.service.AudioResultBuilder;
 import de.kobich.audiosolutions.core.service.AudioServiceUtils;
 import de.kobich.commons.misc.extract.ExtractStructureResponse;
 import de.kobich.commons.misc.extract.Extractor;
@@ -168,7 +168,7 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 		ProgressData beginData = new ProgressData("Write ID3 tags...", fileDescriptorList.size());
 		progressSupport.monitorBeginTask(beginData);
 
-		AudioResultSupport result = new AudioResultSupport();
+		AudioResultBuilder result = new AudioResultBuilder();
 		Collections.sort(fileDescriptorList, new DefaultFileDescriptorComparator());
 		for (FileDescriptor fileDescriptor : fileDescriptorList) {
 			try {
@@ -202,7 +202,8 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 		}
 		// monitor end
 		progressSupport.monitorEndTask(new ProgressData("ID3 tags written"));
-		return result.createAudioFileResult(fileDescriptorList);
+		result.setMissingAsFailed(fileDescriptorList);
+		return result.build();
 	}
 
 	@Override
@@ -212,7 +213,7 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 		ProgressData beginData = new ProgressData("Write ID3 tags...");
 		progressSupport.monitorBeginTask(beginData);
 
-		AudioResultSupport result = new AudioResultSupport();
+		AudioResultBuilder result = new AudioResultBuilder();
 		
 		Set<IText> texts = AudioServiceUtils.convert2Texts(fileDescriptors);
 		Collection<StructureVariable> variables = AudioAttribute2StructureVariableMapper.getInstance().getVariables();
@@ -268,7 +269,8 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 		
 		// monitor end
 		progressSupport.monitorEndTask(new ProgressData("ID3 tags written"));
-		return result.createAudioFileResult(fileDescriptors);
+		result.setMissingAsFailed(fileDescriptors);
+		return result.build();
 	}
 
 	@Override
@@ -280,7 +282,7 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 		ProgressData beginData = new ProgressData("Write ID3 tags...", fileDescriptorList.size());
 		progressSupport.monitorBeginTask(beginData);
 		
-		AudioResultSupport result = new AudioResultSupport();
+		AudioResultBuilder result = new AudioResultBuilder();
 		Collections.sort(fileDescriptorList, new DefaultFileDescriptorComparator());
 		for (FileDescriptor fileDescriptor : fileDescriptorList) {
 			try {
@@ -328,8 +330,8 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 		}
 		// monitor end
 		progressSupport.monitorEndTask(new ProgressData("ID3 tags written"));
-		
-		return result.createAudioFileResult(fileDescriptorList);
+		result.setMissingAsFailed(fileDescriptorList);
+		return result.build();
 	}
 	
 	@Override

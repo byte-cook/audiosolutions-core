@@ -17,7 +17,7 @@ import de.kobich.audiosolutions.core.service.AudioAttribute;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.AudioFileResult;
-import de.kobich.audiosolutions.core.service.AudioResultSupport;
+import de.kobich.audiosolutions.core.service.AudioResultBuilder;
 import de.kobich.commons.misc.extract.Extractor;
 import de.kobich.commons.misc.extract.StructureVariable;
 import de.kobich.commons.monitor.progress.IServiceProgressMonitor;
@@ -66,7 +66,7 @@ public class AudioIOService {
 		}
 
 		try {
-			AudioResultSupport result = new AudioResultSupport();
+			AudioResultBuilder result = new AudioResultBuilder();
 
 			Collections.sort(fileDescriptors, new DefaultFileDescriptorComparator());
 			for (FileDescriptor fileDescriptor : fileDescriptors) {
@@ -88,7 +88,8 @@ public class AudioIOService {
 					result.succeededFiles.add(fileDescriptor);
 				}
 			}
-			return result.createAudioFileResult(fileDescriptors);
+			result.setMissingAsFailed(fileDescriptors);
+			return result.build();
 		}
 		catch (AudioException exc) {
 			throw exc;

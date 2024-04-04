@@ -9,22 +9,28 @@ import java.util.Set;
 
 import de.kobich.component.file.FileDescriptor;
 
-public class AudioResultSupport {
+public class AudioResultBuilder {
 	public final Set<FileDescriptor> succeededFiles;
 	public final Set<File> createdFiles;
 	public final Set<File> deletedFiles;
 	public final Map<FileDescriptor, FileDescriptor> replacedFiles;
+	private final Set<FileDescriptor> failedFiles;
 	
-	public AudioResultSupport() {
+	public AudioResultBuilder() {
 		this.succeededFiles = new HashSet<FileDescriptor>();
 		this.createdFiles = new HashSet<File>();
 		this.deletedFiles = new HashSet<File>();
 		this.replacedFiles = new HashMap<FileDescriptor, FileDescriptor>();
+		this.failedFiles = new HashSet<>();
 	}
 	
-	public AudioFileResult createAudioFileResult(Collection<FileDescriptor> allFiles) {
-		Set<FileDescriptor> failedFiles = new HashSet<FileDescriptor>(allFiles); 
-		failedFiles.removeAll(succeededFiles);
+	public void setMissingAsFailed(Collection<FileDescriptor> allFiles) {
+		this.failedFiles.addAll(allFiles);
+		this.failedFiles.removeAll(this.succeededFiles);
+		this.failedFiles.removeAll(this.replacedFiles.keySet());
+	}
+	
+	public AudioFileResult build() {
 		return new AudioFileResult(succeededFiles, createdFiles, deletedFiles, replacedFiles, failedFiles);
 	}
 
