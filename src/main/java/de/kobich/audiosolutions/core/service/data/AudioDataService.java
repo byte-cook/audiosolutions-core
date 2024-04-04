@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.lang.Nullable;
@@ -35,7 +36,7 @@ import de.kobich.commons.monitor.progress.ProgressData;
 import de.kobich.commons.monitor.progress.ProgressSupport;
 import de.kobich.component.file.DefaultFileDescriptorComparator;
 import de.kobich.component.file.FileDescriptor;
-import de.kobich.component.file.FileDescriptorResultSupport;
+import de.kobich.component.file.FileDescriptorResultBuilder;
 import de.kobich.component.file.FileDescriptorTextAdapter;
 import de.kobich.component.file.TextComparator;
 import de.kobich.component.file.descriptor.FileDescriptorResult;
@@ -46,6 +47,7 @@ import de.kobich.component.file.descriptor.FileDescriptorResult;
  */
 @Service
 public class AudioDataService {
+	private static final Logger logger = Logger.getLogger(AudioDataService.class);
 	@Autowired
 	@Qualifier(value=IFileID3TagService.JAUDIO_TAGGER)
 	private IFileID3TagService fileID3TagService;
@@ -158,7 +160,7 @@ public class AudioDataService {
 	 * @param request the request
 	 * @return audio data
 	 */
-	public void addAudioDataByID3Tags(Set<FileDescriptor> fileDescriptors, @Nullable IServiceProgressMonitor monitor) throws AudioException {
+	public void addAudioDataByID3Tags(Set<FileDescriptor> fileDescriptors, Collection<MP3ID3TagType> variables, @Nullable IServiceProgressMonitor monitor) throws AudioException {
 		ProgressSupport support = new ProgressSupport(monitor);
 		support.monitorBeginTask(new ProgressData("Set Audio Data by ID3 tags..."));
 
@@ -183,6 +185,11 @@ public class AudioDataService {
 
 			Map<MP3ID3TagType, String> variableValues = succeededFiles.get(fileDescriptor);
 			for (MP3ID3TagType variable : variableValues.keySet()) {
+				if (!variables.isEmpty() && !variables.contains(variable)) {
+					logger.info("Skipping variable %s".formatted(variable));
+					continue;
+				}
+				
 				AudioAttribute attribute = mapper.getAudioAttribute(variable);
 				if (attribute != null) {
 					String value = variableValues.get(variable);
@@ -225,7 +232,7 @@ public class AudioDataService {
 		ProgressSupport support = new ProgressSupport(monitor);
 		support.monitorBeginTask(new ProgressData("Modify import directory..."));
 
-		FileDescriptorResultSupport result = new FileDescriptorResultSupport();
+		FileDescriptorResultBuilder result = new FileDescriptorResultBuilder();
 		
 		List<FileDescriptor> fileDescriptorList = new ArrayList<FileDescriptor>(fileDescriptors);
 		Collections.sort(fileDescriptorList, new DefaultFileDescriptorComparator());
@@ -255,7 +262,7 @@ public class AudioDataService {
 		result.setMissingAsFailed(fileDescriptorList);
 		support.monitorEndTask("Import directory changed");
 		
-		return result.createFileDescriptorResult();
+		return result.build();
 	}
 	
 }

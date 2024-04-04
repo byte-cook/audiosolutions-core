@@ -1,7 +1,7 @@
 package de.kobich.audiosolutions.core.service;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Hashtable;
 import java.util.Map;
@@ -9,7 +9,7 @@ import java.util.Map;
 import de.kobich.audiosolutions.core.service.mp3.id3.MP3ID3TagType;
 
 /**
- * Maps audio attributes to structure variables.
+ * Maps audio attributes to ID3 tags.
  * @author ckorn
  */
 public class AudioAttribute2MP3ID3TagMapper {
@@ -41,7 +41,7 @@ public class AudioAttribute2MP3ID3TagMapper {
 		map.put(MP3ID3TagType.TRACK_NO, AudioAttribute.TRACK_NO);
 		map.put(MP3ID3TagType.ENCODING_TYPE, AudioAttribute.TRACK_FORMAT);
 		
-		variables = new ArrayList<MP3ID3TagType>(map.keySet());
+		variables = Collections.unmodifiableCollection(map.keySet());
 	}
 	
 	/**
