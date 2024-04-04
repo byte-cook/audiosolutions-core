@@ -35,6 +35,8 @@ import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.TestUtils;
 import de.kobich.audiosolutions.core.service.data.AudioDataService;
 import de.kobich.audiosolutions.core.service.persist.AudioPersistenceService;
+import de.kobich.audiosolutions.core.service.playlist.EditablePlaylist;
+import de.kobich.audiosolutions.core.service.playlist.PlaylistService;
 import de.kobich.audiosolutions.core.service.search.AudioTextSearchResult;
 import de.kobich.audiosolutions.core.service.search.AudioTextSearchService;
 import de.kobich.commons.monitor.progress.IServiceProgressMonitor;
@@ -48,7 +50,7 @@ import de.kobich.component.file.FileDescriptor;
 public class AudioSolutionsTest {
 	private static final Logger logger = Logger.getLogger(AudioSolutionsTest.class);
 	private static final IServiceProgressMonitor PROGRESS_MONITOR = new SysoutProgressMonitor();
-	private static final AudioSolutionsVersion CURRENT_VERSION = AudioSolutionsVersion.V9_0;
+	
 	
 	@AfterEach
 	public void shutdown() {
@@ -78,7 +80,7 @@ public class AudioSolutionsTest {
 	public void testSpringContext() throws Exception {
 		File rootDir = createRootDir("springcontext", null);
 		
-		AudioSolutions.init(CURRENT_VERSION, rootDir);
+		AudioSolutions.init(rootDir);
 		
 		// a view tries to get a service before initialization
 		class LoadServiceView implements Runnable {
@@ -104,7 +106,7 @@ public class AudioSolutionsTest {
 
 	@Test
 	public void testCreateTestData() throws Exception {
-		File rootDir = createRootDir(CURRENT_VERSION.getLabel(), null);
+		File rootDir = createRootDir(AudioSolutions.CURRENT_VERSION.getLabel(), null);
 		startAudioSolutions(rootDir);
 
 		createTestData();
@@ -115,7 +117,7 @@ public class AudioSolutionsTest {
 		System.setProperty(AudioSolutions.DB_DEBUG_PROP, "true");
 		File rootDir = createRootDir("v8_corrupted", "/data/8.0/audiosolutions/");
 		
-		final AudioSolutionsStatus status = AudioSolutions.init(CURRENT_VERSION, rootDir);
+		final AudioSolutionsStatus status = AudioSolutions.init(rootDir);
 		assertEquals(AudioSolutionsStatus.VERSION_MISMATCH, status);
 		
 		// make DB corrupted
@@ -129,7 +131,7 @@ public class AudioSolutionsTest {
 			}
 		}
 		
-		assertThrows(AudioException.class, () -> AudioSolutions.migrate(CURRENT_VERSION, PROGRESS_MONITOR));
+		assertThrows(AudioException.class, () -> AudioSolutions.migrate(PROGRESS_MONITOR));
 		try (Connection connection = DriverManager.getConnection(dbConnectionSetting.url(), dbConnectionSetting.user(), dbConnectionSetting.password())) {
 			connection.setAutoCommit(false);
 			List<DBTable> tables = SQLUtils.getTables(connection, Set.of("ALBUM"));
@@ -147,14 +149,39 @@ public class AudioSolutionsTest {
 		System.setProperty(AudioSolutions.DB_DEBUG_PROP, "true");
 		File rootDir = createRootDir("v8", "/data/8.0/audiosolutions/");
 
-		final AudioSolutionsStatus status = AudioSolutions.init(CURRENT_VERSION, rootDir);
+		final AudioSolutionsStatus status = AudioSolutions.init(rootDir);
 		assertEquals(AudioSolutionsStatus.VERSION_MISMATCH, status);
 		assertEquals(AudioSolutionsVersion.V8_0.getLabel(), AudioSolutions.getCurrentVersion().orElse("unknown"));
-		AudioSolutions.migrate(CURRENT_VERSION, PROGRESS_MONITOR);
-		assertEquals(CURRENT_VERSION.getLabel(), AudioSolutions.getCurrentVersion().orElse("unknown"));
+		AudioSolutions.migrate(PROGRESS_MONITOR);
+		assertEquals(AudioSolutions.CURRENT_VERSION.getLabel(), AudioSolutions.getCurrentVersion().orElse("unknown"));
 		
 		AudioSolutions.initSpringContext();
 
+		validateDatabase();
+		createTestData();
+	}
+	
+	@Test
+	public void testMigrateTwice() throws Exception {
+		System.setProperty(AudioSolutions.DB_DEBUG_PROP, "true");
+		
+		// two root directories are required because the root directory is locked
+		File rootDir1 = createRootDir("v8_twice_1", "/data/8.0/audiosolutions/");
+		File rootDir2 = createRootDir("v8_twice_2", "/data/8.0/audiosolutions/");
+		// migrate rootDir1
+		final AudioSolutionsStatus status = AudioSolutions.init(rootDir1);
+		assertEquals(AudioSolutionsStatus.VERSION_MISMATCH, status);
+		AudioSolutions.migrate(PROGRESS_MONITOR);
+		// copy db of rootDir1 to rootDir2
+		File dbRootDir1 = new File(rootDir1, "db");
+		File dbRootDir2 = new File(rootDir2, "db");
+		FileUtils.deleteDirectory(dbRootDir2);
+		FileUtils.copyDirectory(dbRootDir1, dbRootDir2);
+		// migrate rootDir1
+		AudioSolutions.init(rootDir2);
+		AudioSolutions.migrate(PROGRESS_MONITOR);
+		assertEquals(AudioSolutions.CURRENT_VERSION.getLabel(), AudioSolutions.getCurrentVersion().orElse("unknown"));
+		AudioSolutions.initSpringContext();
 		validateDatabase();
 		createTestData();
 	}
@@ -170,9 +197,9 @@ public class AudioSolutionsTest {
 		System.setProperty(AudioSolutions.DB_DEBUG_PROP, "true");
 		File rootDir = createRootDir("v8_performance", "/data/8.0/audiosolutions_all/");
 
-		final AudioSolutionsStatus status = AudioSolutions.init(CURRENT_VERSION, rootDir);
+		final AudioSolutionsStatus status = AudioSolutions.init(rootDir);
 		if (AudioSolutionsStatus.VERSION_MISMATCH.equals(status)) {
-			AudioSolutions.migrate(CURRENT_VERSION, PROGRESS_MONITOR);
+			AudioSolutions.migrate(PROGRESS_MONITOR);
 		}
 		
 		AudioSolutions.initSpringContext();
@@ -197,9 +224,7 @@ public class AudioSolutionsTest {
 	}
 	
 	private File createRootDir(String name, @Nullable final String resourcePath) throws IOException, URISyntaxException {
-		File dataDir = new File(AudioSolutionsTest.class.getResource("/data/").toURI());
-		File rootDir = new File(dataDir, name);
-		FileUtils.deleteDirectory(rootDir);
+		File rootDir = TestUtils.getOutputDir("audiosolutions-" + name, true);
 		logger.info("Root dir: " + rootDir);
 		
 		if (resourcePath == null) {
@@ -213,7 +238,7 @@ public class AudioSolutionsTest {
 	}
 	
 	private AudioSolutionsStatus startAudioSolutions(File rootDir) throws AudioException, FileNotFoundException, IOException {
-		final AudioSolutionsStatus status = AudioSolutions.init(CURRENT_VERSION, rootDir);
+		final AudioSolutionsStatus status = AudioSolutions.init(rootDir);
 		logger.info("DB Url: " + AudioSolutions.getDbConnectionSetting());
 		switch (status) {
 			case LOCKED:
@@ -235,7 +260,7 @@ public class AudioSolutionsTest {
 		Properties properties = new Properties();
 		try (InputStream in = new FileInputStream(propertiesFile)) {
 			properties.load(in);
-			assertEquals(CURRENT_VERSION.getLabel(), properties.get(AudioSolutions.VERSION_PROP));
+			assertEquals(AudioSolutions.CURRENT_VERSION.getLabel(), properties.get(AudioSolutions.VERSION_PROP));
 		}
 		return status;
 	}
@@ -281,6 +306,11 @@ public class AudioSolutionsTest {
 		assertEquals(3, persistenceService.getCount(AudioAttribute.TRACK));
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ARTIST));
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
+		
+		PlaylistService playlistService = AudioSolutions.getService(PlaylistService.class);
+		EditablePlaylist ep = playlistService.createNewPlaylist("test-playlist", false);
+		ep.createOrGetFolder("folder 1");
+		playlistService.savePlaylist(ep, PROGRESS_MONITOR);
 	}
 
 }

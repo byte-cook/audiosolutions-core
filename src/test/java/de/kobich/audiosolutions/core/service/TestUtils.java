@@ -1,11 +1,15 @@
 package de.kobich.audiosolutions.core.service;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.annotation.Nullable;
+
+import org.apache.commons.io.FileUtils;
 
 import de.kobich.audiosolutions.core.service.AudioDataChange.AudioDataChangeBuilder;
 import de.kobich.component.file.FileDescriptor;
@@ -14,6 +18,18 @@ public class TestUtils {
 	public static final String STONES = "Rolling Stones";
 	public static final String BEGGARS_BANQUET = "Beggars Banquet";
 	public static final String SYMPATHY_DEVIL = "sympathy for the devil";
+	
+	public static File getRootDir() throws URISyntaxException {
+		return new File(TestUtils.class.getResource("/").toURI());
+	}
+	
+	public static File getOutputDir(String name, boolean deleteDir) throws IOException, URISyntaxException {
+		File outputDir = new File(getRootDir(), name);
+		if (deleteDir) {
+			FileUtils.deleteDirectory(outputDir);
+		}
+		return outputDir;
+	}
 	
 	public static FileDescriptor createFileDescriptor(String fileName) {
 		return new FileDescriptor(new File(fileName), fileName);

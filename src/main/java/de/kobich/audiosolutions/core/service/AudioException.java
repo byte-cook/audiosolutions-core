@@ -26,6 +26,7 @@ public class AudioException extends ApplicationException {
 	public static final ErrorCode CONNECTION_ERROR = new ErrorCode("audio.connectionError", "Internet connection cannot be established");
 	public static final ErrorCode CHECKER_NOT_FOUND_ERROR = new ErrorCode("audio.checkerNotFoundError", "No suitable audio checker found");
 	public static final ErrorCode DB_MIGRATION_ERROR = new ErrorCode("audio.databaseMigrationError", "Database migration failed");
+	public static final ErrorCode PLAYLIST_NOT_FOUND_ERROR = new ErrorCode("audio.playlistNotFoundError", "Playlist cannot be found: {0}");
 
 	private static final long serialVersionUID = -5238782004634985009L;
 

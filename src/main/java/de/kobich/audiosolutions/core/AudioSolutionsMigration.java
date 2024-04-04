@@ -8,9 +8,11 @@ import java.sql.SQLException;
 import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.hsqldb.jdbc.JDBCDriver;
@@ -22,6 +24,7 @@ import de.kobich.commons.utils.SQLUtils.DBTable;
 import de.kobich.commons.utils.SQLUtils.DBTableColumn;
 import de.kobich.commons.utils.SQLUtils.DBTableFK;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Migrates old DB versions to the current one.
@@ -30,12 +33,31 @@ import lombok.Getter;
  */
 class AudioSolutionsMigration {
 	private static final Logger logger = Logger.getLogger(AudioSolutionsMigration.class);
-	private static final String ARTIST = "ARTIST";
-	private static final String ALBUM = "ALBUM";
-	private static final String TRACK = "TRACK";
-	private static final String MEDIUM = "MEDIUM";
-	private static final String GENRE = "GENRE";
-	private static final Set<String> TABLENAMES = Set.of(ARTIST, ALBUM, TRACK, MEDIUM, GENRE);
+	
+	@RequiredArgsConstructor
+	private enum AudioTable {
+		ARTIST("ARTIST"), ALBUM("ALBUM"), TRACK("TRACK"), MEDIUM("MEDIUM"), GENRE("GENRE");
+		
+		@Getter
+		private final String name;
+		
+		public static Set<String> getNames() {
+			return Arrays.asList(AudioTable.values()).stream().map(AudioTable::getName).collect(Collectors.toSet());
+		}
+	}
+	
+	@RequiredArgsConstructor
+	private enum PlaylistTable {
+		PLAYLIST("PLAYLIST"), PLAYLISTFOLDER("PLAYLISTFOLDER"), PLAYLISTFILE("PLAYLISTFILE");
+		
+		@Getter
+		private final String name;
+		
+		public static Set<String> getNames() {
+			return Arrays.asList(PlaylistTable.values()).stream().map(PlaylistTable::getName).collect(Collectors.toSet());
+		}
+	}
+
 
 	public static AudioSolutionsVersion migrate(AudioSolutionsVersion sourceVersion, File dataRootDirectory, DBConnectionSetting dbConnectionSetting, IServiceProgressMonitor progressMonitor) throws Exception {
 		DriverManager.registerDriver(new JDBCDriver());
@@ -51,6 +73,8 @@ class AudioSolutionsMigration {
 					case V8_0:
 						return migrateV8(connection, dataRootDirectory);
 					case V9_0:
+						return migrateV9(connection, dataRootDirectory);
+					case V10_0:
 					default:
 //						URL sqlScriptUrl = AudioSolutionsMigration.class.getResource("/db/migration/migrate-8.0.sql");
 //						EncodedResource sqlScript = new EncodedResource(new PathResource(sqlScriptUrl.toURI()));
@@ -71,7 +95,6 @@ class AudioSolutionsMigration {
 
 	/**
 	 * Migrates the DB from v8 to v9: 
-	 * - change type of column ID to BIGINT for all tables 
 	 */
 	private static AudioSolutionsVersion migrateV8(Connection connection, File dataRootDirectory) throws Exception {
 		// ================================================================
@@ -79,7 +102,7 @@ class AudioSolutionsMigration {
 		// ================================================================
 		final String TYPE_BIGINT = "BIGINT";
 			
-		final List<DBTable> tables = SQLUtils.getTables(connection, TABLENAMES);
+		final List<DBTable> tables = SQLUtils.getTables(connection, AudioTable.getNames());
 		final AudioTables audioTables = new AudioTables(tables);
 		List<DBTableFK> albumFKs = SQLUtils.getForeignKeys(connection, audioTables.getAlbumTable(), tables);
 		List<DBTableFK> trackFKs = SQLUtils.getForeignKeys(connection, audioTables.getTrackTable(), tables);
@@ -124,13 +147,8 @@ class AudioSolutionsMigration {
 				}
 				
 				// migrate existing data
-				logAndExecute(stmt, "UPDATE track SET artist_id=( SELECT artist_id FROM album WHERE track.album_id=album.id )");
-				
 				// see: https://hsqldb.org/doc/guide/deployment-chapt.html#dec_bulk_operations
-//				PreparedStatement preparedStatement = connection.prepareStatement("UPDATE track SET artist_id=( SELECT artist_id FROM album INNER JOIN track ON album.id=track.album_id WHERE track.album_id=album.id ) WHERE track.id=?");
-//				PreparedStatement preparedStatement = connection.prepareStatement("UPDATE track SET artist_id=( SELECT artist_id FROM album INNER JOIN track ON album.id=track.album_id WHERE track.album_id=album.id )");
-//				PreparedStatement preparedStatement = connection.prepareStatement("UPDATE track SET artist_id=( SELECT artist_id FROM album WHERE track.album_id=album.id )");
-//				preparedStatement.execute();
+				logAndExecute(stmt, "UPDATE track SET artist_id=( SELECT artist_id FROM album WHERE track.album_id=album.id )");
 			
 				// check if data migration was successful
 				ResultSet checkRS = stmt.executeQuery("SELECT * FROM track WHERE artist_id is null");
@@ -143,36 +161,6 @@ class AudioSolutionsMigration {
 				for (DBTableUniqueConstraints constraint : albumConstraints) {
 					logAndExecute(stmt, String.format("ALTER TABLE album DROP CONSTRAINT %s", constraint.name()));
 				}
-				
-//				DBTableColumn albumArtistId = getColumn(connection, audioTables.getAlbumTable(), "artist_id").orElse(null);
-//				if (albumArtistId == null) {
-//					// delete column: album.artist_id
-//					logger.info("Remove column album.artist_id");
-//					albumFKs = SQLUtils.getForeignKeys(connection, audioTables.getAlbumTable(), tables);
-//					DBTableFK albumArtistFK = albumFKs.stream().filter(fk -> fk.pkTable().equals(audioTables.getArtistTable())).findFirst().orElse(null);
-//					if (albumArtistFK != null) {
-//						logAndExecute(stmt, String.format("ALTER TABLE %s DROP CONSTRAINT %s", albumArtistFK.fkTable().name(), albumArtistFK.name()));
-//					}
-//						
-//					// SQLUtils.getTableIndices() does not return correct index names -> use HSQLDB's INFORMATION_SCHEMA instead
-//	//				List<DBTableIndex> indexes = SQLUtils.getTableIndices(connection, audioTables.getAlbumTable());
-//	//				DBTableIndex index = indexes.stream().filter(i -> "artist_id".equalsIgnoreCase(i.columnName())).findFirst().orElse(null);
-//	//				logAndExecute(stmt, String.format("ALTER TABLE %s DROP CONSTRAINT %s", index.table().name(), index.name()));
-//					/*
-//					ResultSet albumConstraintRS = stmt.executeQuery("SELECT * FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS where table_name = 'ALBUM' and constraint_type = 'UNIQUE'");
-//					if (albumConstraintRS.next()) {
-//						String uniqueConstraintName = albumConstraintRS.getString("CONSTRAINT_NAME");
-//						logAndExecute(stmt, String.format("ALTER TABLE album DROP CONSTRAINT %s", uniqueConstraintName));
-//					}*/
-//					List<DBTableUniqueConstraints> albumConstraints = getHsqldbUniqueConstraints(stmt, audioTables.getAlbumTable());
-//					for (DBTableUniqueConstraints constraint : albumConstraints) {
-//						// TODO delete all?
-//						logAndExecute(stmt, String.format("ALTER TABLE album DROP CONSTRAINT %s", constraint.name()));
-//					}
-//						
-//					logAndExecute(stmt, "ALTER TABLE album DROP COLUMN artist_id");
-//				}
-				connection.commit();
 			}
 		}
 		
@@ -184,10 +172,73 @@ class AudioSolutionsMigration {
 			logAndExecute(stmt, "ALTER TABLE track ALTER COLUMN artist_id SET NOT NULL");
 			logAndExecute(stmt, "ALTER TABLE track ALTER COLUMN album_id SET NOT NULL");
 			logAndExecute(stmt, "ALTER TABLE track ALTER COLUMN genre_id SET NOT NULL");
-			
 		}
 		
 		return AudioSolutionsVersion.V9_0;
+	}
+	
+	/**
+	 * Migrates the DB from v9 to v10: 
+	 */
+	private static AudioSolutionsVersion migrateV9(Connection connection, File dataRootDirectory) throws Exception {
+		// ================================================================
+		// 1. create tables + constraints for playlist
+		// ================================================================
+		final List<DBTable> tables = SQLUtils.getTables(connection, PlaylistTable.getNames());
+		if (tables.isEmpty()) {
+			try (Statement stmt = connection.createStatement()) {
+				// create tables
+				logAndExecute(stmt, """
+						create table playlist (
+							id bigint generated by default as identity (start with 1),
+							name varchar(255) not null,
+							system boolean,
+							primary key (id)
+						)
+						""");
+				logAndExecute(stmt, """
+						create table playlistfolder (
+							id bigint generated by default as identity (start with 1),
+							path varchar(255) not null,
+							playlist_id bigint not null,
+							primary key (id)
+						)
+						""");
+				logAndExecute(stmt, """
+						create table playlistfile (
+							id bigint generated by default as identity (start with 1),
+							file_path varchar(255) not null,
+							name varchar(255) not null,
+							sort_order bigint not null,
+							playlistfolder_id bigint not null,
+							primary key (id)
+						)
+						""");
+				// create constraints
+				logAndExecute(stmt, """
+						alter table playlist add constraint UK_playlist unique (name, system)
+						""");
+				logAndExecute(stmt, """
+						alter table playlistfolder add constraint UK_playlistfolder unique (path, playlist_id)
+						""");
+				logAndExecute(stmt, """
+						alter table playlistfile add constraint UK_playlistfile unique (name, file_path, playlistfolder_id)
+						""");
+				logAndExecute(stmt, """
+						alter table playlistfile 
+						add constraint FK_playlistfile_playlistfolder
+						foreign key (playlistfolder_id) 
+						references playlistfolder
+						""");
+				logAndExecute(stmt, """
+						alter table playlistfolder 
+						add constraint FK_playlistfolder_playlist 
+						foreign key (playlist_id) 
+						references playlist
+						""");
+			}
+		}
+		return AudioSolutionsVersion.V10_0;
 	}
 	
 	@Getter
@@ -199,11 +250,11 @@ class AudioSolutionsMigration {
 		private final DBTable genreTable;
 		
 		public AudioTables(List<DBTable> tables) {
-			artistTable = tables.stream().filter(t -> ARTIST.equals(t.name())).findFirst().orElseThrow();
-			albumTable = tables.stream().filter(t -> ALBUM.equals(t.name())).findFirst().orElseThrow();
-			trackTable = tables.stream().filter(t -> TRACK.equals(t.name())).findFirst().orElseThrow();
-			mediumTable = tables.stream().filter(t -> MEDIUM.equals(t.name())).findFirst().orElseThrow();
-			genreTable = tables.stream().filter(t -> GENRE.equals(t.name())).findFirst().orElseThrow();
+			artistTable = tables.stream().filter(t -> AudioTable.ARTIST.getName().equals(t.name())).findFirst().orElseThrow();
+			albumTable = tables.stream().filter(t -> AudioTable.ALBUM.getName().equals(t.name())).findFirst().orElseThrow();
+			trackTable = tables.stream().filter(t -> AudioTable.TRACK.getName().equals(t.name())).findFirst().orElseThrow();
+			mediumTable = tables.stream().filter(t -> AudioTable.MEDIUM.getName().equals(t.name())).findFirst().orElseThrow();
+			genreTable = tables.stream().filter(t -> AudioTable.GENRE.getName().equals(t.name())).findFirst().orElseThrow();
 		}
 	}
 	

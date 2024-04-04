@@ -10,7 +10,8 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum AudioSolutionsVersion {
 	V8_0("8.0.0.0"),
-	V9_0("9.0.0.0");
+	V9_0("9.0.0.0"),
+	V10_0("10.0.0.0");
 	
 	private final String label;
 	

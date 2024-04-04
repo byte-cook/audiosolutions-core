@@ -7,7 +7,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Collections;
@@ -30,6 +29,7 @@ import lombok.Getter;
 
 public class AudioSolutions {
 	private static final Logger logger = Logger.getLogger(AudioSolutions.class);
+	public static final AudioSolutionsVersion CURRENT_VERSION = AudioSolutionsVersion.V10_0;
 	public static final record DBConnectionSetting(String url, String user, String password) {}
 	public static final String VERSION_PROP = "audiosolutions.version";
 	public static final String UI_DEBUG_PROP = "audiosolutions.ui.debug";
@@ -52,18 +52,14 @@ public class AudioSolutions {
 	 */
 	@Getter
 	private static File coverArtRootDir;
-	private static ResourceBundle applicationResourceBundle; // TODO
+	private static ResourceBundle applicationResourceBundle;
 	
 	private static final AudioSolutionsSpringContext springContext = new AudioSolutionsSpringContext();
 	
 	/**
 	 * Init the application
-	 * @param args
-	 * @return boolean false for shutdown
-	 * @throws URISyntaxException 
-	 * @throws IOException 
 	 */
-	public static AudioSolutionsStatus init(AudioSolutionsVersion version, File dataRootDirectory) throws AudioException {
+	public static AudioSolutionsStatus init(File dataRootDirectory) throws AudioException {
 		try {
 			Logger.getRootLogger().setLevel(Level.INFO);
 		
@@ -113,7 +109,7 @@ public class AudioSolutions {
 			logger.info("Cover art dir: " + coverArtRootDir.getAbsolutePath());
 			
 			// check version
-			logger.info("Version: " + version);
+			logger.info("Version: " + CURRENT_VERSION);
 			AudioSolutions.propertiesFile = new File(dataRootDirectory, "audiosolutions.properties");
 			AudioSolutions.properties = new Properties();
 			if (propertiesFile.exists()) {
@@ -122,17 +118,17 @@ public class AudioSolutions {
 					String versionFromFile = properties.getProperty(VERSION_PROP);
 					if (versionFromFile == null) {
 						// create properties file
-						properties.put(VERSION_PROP, version.getLabel());
+						properties.put(VERSION_PROP, CURRENT_VERSION.getLabel());
 						writeProperties();
 					}
-					else if (!versionFromFile.equals(version.getLabel())) {
+					else if (!versionFromFile.equals(CURRENT_VERSION.getLabel())) {
 						return AudioSolutionsStatus.VERSION_MISMATCH;
 					}
 				}
 			}
 			else {
 				// create properties file
-				properties.put(VERSION_PROP, version.getLabel());
+				properties.put(VERSION_PROP, CURRENT_VERSION.getLabel());
 				writeProperties();
 			}
 			return AudioSolutionsStatus.INITIALIZED;
@@ -143,11 +139,11 @@ public class AudioSolutions {
 		}
 	}
 	
-	public static void migrate(AudioSolutionsVersion version, IServiceProgressMonitor progressMonitor) throws AudioException {
+	public static void migrate(IServiceProgressMonitor progressMonitor) throws AudioException {
 		checkInitialized();
 		try {
 			ProgressSupport progressSupport = new ProgressSupport(progressMonitor);
-			progressSupport.monitorBeginTask("Migrate to version " + version.getLabel());
+			progressSupport.monitorBeginTask("Migrate to version " + CURRENT_VERSION.getLabel());
 			
 			progressSupport.monitorSubTask("Creating backup", 1);
 			String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_hhmmss"));
@@ -157,11 +153,11 @@ public class AudioSolutions {
 
 			progressSupport.monitorSubTask("Start migration", 1);
 			final AudioSolutionsVersion sourceVersion = AudioSolutionsVersion.parse(properties.getProperty(VERSION_PROP)).orElseThrow();
-			AudioSolutionsVersion currentVersion = sourceVersion;
-			while (!currentVersion.equals(version)) {
-				currentVersion = AudioSolutionsMigration.migrate(sourceVersion, AudioSolutions.dataRootDir, getDbConnectionSetting(), progressMonitor);
+			AudioSolutionsVersion tmpVersion = sourceVersion;
+			while (!tmpVersion.equals(CURRENT_VERSION)) {
+				tmpVersion = AudioSolutionsMigration.migrate(tmpVersion, AudioSolutions.dataRootDir, getDbConnectionSetting(), progressMonitor);
 				
-				properties.put(VERSION_PROP, currentVersion.getLabel());
+				properties.put(VERSION_PROP, tmpVersion.getLabel());
 				writeProperties();
 			}
 			
