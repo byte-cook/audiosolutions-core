@@ -25,9 +25,7 @@ import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.AudioSolutionsTestSpringConfig;
 import de.kobich.audiosolutions.core.service.TestUtils;
 import de.kobich.audiosolutions.core.service.playlist.repository.Playlist;
-import de.kobich.audiosolutions.core.service.playlist.repository.PlaylistFile;
 import de.kobich.audiosolutions.core.service.playlist.repository.PlaylistFileRepository;
-import de.kobich.audiosolutions.core.service.playlist.repository.PlaylistFolder;
 import de.kobich.audiosolutions.core.service.playlist.repository.PlaylistFolderRepository;
 import de.kobich.audiosolutions.core.service.playlist.repository.PlaylistRepository;
 import de.kobich.component.file.FileResult;
@@ -41,6 +39,7 @@ public class PlaylistServiceTest {
 	private static File file3;
 	private static File file4;
 	private static File file5;
+	private static File file6;
 	@Autowired
 	private PlaylistService playlistService;
 	@Autowired
@@ -58,6 +57,7 @@ public class PlaylistServiceTest {
 		file3 = new File(rootFolder, "file3.txt");
 		file4 = new File(rootFolder, "file4.txt");
 		file5 = new File(rootFolder, "file5.txt");
+		file6 = new File(rootFolder, "file6.txt");
 	}
 	
 	@AfterEach
@@ -134,6 +134,22 @@ public class PlaylistServiceTest {
 		assertEquals(1, playlistFileRepository.count());
 	}
 	
+	@Test
+	public void testMoveToFolder() throws AudioException {
+		EditablePlaylist ep = playlistService.createNewPlaylist("test", false);
+		EditablePlaylistFolder ef1 = ep.createOrGetFolder("folder 1");
+		ep.addFiles(Set.of(file1), ef1);
+		EditablePlaylistFolder ef2 = ep.createOrGetFolder("folder 2");
+		ep.moveToFolder(Set.of(ef1), Set.of(), ef2);
+		assertEquals(1, ep.getFolders().size());
+		ef1 = ep.getFolders().iterator().next();
+		assertEquals(1, ef1.getFiles().size());
+		ep.moveToFolder(Set.of(ef2), Set.of(), ef2);
+		assertEquals(1, ep.getFolders().size());
+		ef1 = ep.getFolders().iterator().next();
+		assertEquals(1, ef1.getFiles().size());
+	}
+	
 	private static class TestPropertyChangeListener implements PropertyChangeListener {
 		public int count = 0;
 
@@ -169,28 +185,38 @@ public class PlaylistServiceTest {
 		playlistService.savePlaylist(ep, null);
 		List<Playlist> list = playlistService.getPlaylists(null);
 		assertEquals(1, list.size());
+		
+		ep = playlistService.openPlaylist(list.get(0), null);
+		assertEquals(1, ep.getFolders().size());
+		assertEquals(1, ep.getFolders().iterator().next().getFiles().size());
 		assertEquals("new name", list.iterator().next().getName());
+		assertEquals(1, playlistRepository.count());
+		assertEquals(1, playlistFolderRepository.count());
+		assertEquals(1, playlistFileRepository.count());
 	}
 	
 	@Test
 	public void testSortOrder() throws AudioException {
 		EditablePlaylist ep = playlistService.createNewPlaylist("list 1", true);
-		EditablePlaylistFile ef1 = ep.appendFiles(Set.of(file1)).iterator().next();
-		ep.appendFiles(Set.of(file4, file5));
-		ep.appendFilesAfter(Set.of(file2, file3), ef1);
+		EditablePlaylistFile ef2 = ep.appendFiles(Set.of(file1, file2)).stream().filter(f -> f.getFile().equals(file2)).findFirst().orElse(null);
+		assertNotNull(ef2);
+		ep.appendFiles(Set.of(file5, file6));
+		ep.appendFilesAfter(Set.of(file3, file4), ef2);
 		Playlist p = playlistService.savePlaylist(ep, null);
-		assertEquals("list 1", p.getName());
-		assertEquals(true, p.isSystem());
-		assertEquals(1, p.getFolders().size());
-		PlaylistFolder f = p.getFolders().iterator().next();
-		assertEquals(5, f.getFiles().size());
-		List<PlaylistFile> fileList = new ArrayList<>(f.getFiles());
-		fileList.sort(new PlaylistComparator());
-		assertEquals(file1.getAbsolutePath(), fileList.get(0).getFilePath());
-		assertEquals(file2.getAbsolutePath(), fileList.get(1).getFilePath());
-		assertEquals(file3.getAbsolutePath(), fileList.get(2).getFilePath());
-		assertEquals(file4.getAbsolutePath(), fileList.get(3).getFilePath());
-		assertEquals(file5.getAbsolutePath(), fileList.get(4).getFilePath());
+		ep = playlistService.openPlaylist(p, null);
+		assertEquals("list 1", ep.getName());
+		assertEquals(true, ep.isSystem());
+		assertEquals(1, ep.getFolders().size());
+		EditablePlaylistFolder ef = ep.getFolders().iterator().next();
+		assertEquals(6, ef.getFiles().size());
+		List<EditablePlaylistFile> fileList = new ArrayList<>(ef.getFiles());
+		fileList.sort(EditablePlaylistFileComparator.INSTANCE);
+		assertEquals(file1.getAbsolutePath(), fileList.get(0).getFile().getAbsolutePath());
+		assertEquals(file2.getAbsolutePath(), fileList.get(1).getFile().getAbsolutePath());
+		assertEquals(file3.getAbsolutePath(), fileList.get(2).getFile().getAbsolutePath());
+		assertEquals(file4.getAbsolutePath(), fileList.get(3).getFile().getAbsolutePath());
+		assertEquals(file5.getAbsolutePath(), fileList.get(4).getFile().getAbsolutePath());
+		assertEquals(file6.getAbsolutePath(), fileList.get(5).getFile().getAbsolutePath());
 		
 		assertTrue(playlistService.getSystemPlaylist("list 1").isPresent());
 	}
@@ -236,12 +262,13 @@ public class PlaylistServiceTest {
 		assertTrue(new File(targetDir, file2.getName()).exists());
 		File targetF1 = new File(targetDir, f1.getPath());
 		assertTrue(new File(targetF1, "new-file3.txt").exists());
-		
-		ep.addFiles(Set.of(file4), null);
+
+		File nonExisting = new File("non-existing.wav");
+		ep.addFiles(Set.of(file4, nonExisting), null);
 
 		allFiles = ep.getAllFiles();
 		result = playlistService.copyFilesToDir(allFiles, targetDir, null);
-		assertEquals(3, result.getFailedFiles().size());
+		assertEquals(4, result.getFailedFiles().size());
 		assertTrue(new File(targetDir, file4.getName()).exists());
 	}
 	
