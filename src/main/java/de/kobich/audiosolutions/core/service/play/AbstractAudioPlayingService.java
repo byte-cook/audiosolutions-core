@@ -6,11 +6,16 @@ import org.springframework.stereotype.Service;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.play.player.AbstractAudioPlayer;
 import de.kobich.audiosolutions.core.service.play.player.AudioPlayerState;
-import de.kobich.component.file.FileDescriptor;
 import jakarta.annotation.PreDestroy;
 
 /**
- * Base audio player.
+ * Base audio playing service.
+ * <p/>
+ * The general procedure is as follows: <br />
+ * This service informs the state ({@link AudioPlayerState}) about a desired change, e.g. play the next song. 
+ * The active player ({@link AbstractAudioPlayer}) regularly checks the state to see whether a change is desired. 
+ * If so, the player stops playing and passes control to the runnable ({@link AudioPlayerRunnable}), which then reacts to the corresponding change. 
+ * 
  * @author ckorn
  */
 @Service
@@ -28,7 +33,7 @@ public abstract class AbstractAudioPlayingService implements IAudioPlayingServic
 	 * @param request
 	 * @throws AudioException
 	 */
-	protected synchronized void play(AbstractAudioPlayer audioPlayer, AudioPlayerClient client, AudioPlayList playList) throws AudioException {
+	protected synchronized void play(AbstractAudioPlayer audioPlayer, AudioPlayerClient client, IAudioPlayinglist playList) throws AudioException {
 		stop(this.state.getClient());
 		
 		this.state.initState(client, playList);
@@ -51,16 +56,13 @@ public abstract class AbstractAudioPlayingService implements IAudioPlayingServic
 	@Override
 	public synchronized void resume(AudioPlayerClient client) throws AudioException {
 		checkClient(client);
-		FileDescriptor file = state.getPlayList().getCurrentFile().orElse(null);
-		if (file != null) {
-			this.state.requestResume(file.getFile());
-		}
+		this.state.requestResume();
 	}
 	
 	@Override
-	public synchronized void skip(AudioPlayerClient client, long beginMillis) throws AudioException {
+	public synchronized void rewind(AudioPlayerClient client, long beginMillis) throws AudioException {
 		checkClient(client);
-		this.state.requestSkip(beginMillis);
+		this.state.requestRewind(beginMillis);
 	}
 	
 	@Override

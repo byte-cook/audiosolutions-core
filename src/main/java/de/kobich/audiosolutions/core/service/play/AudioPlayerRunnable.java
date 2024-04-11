@@ -8,10 +8,12 @@ import org.apache.log4j.Logger;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.play.player.AbstractAudioPlayer;
 import de.kobich.audiosolutions.core.service.play.player.AudioPlayerResponse;
-import de.kobich.audiosolutions.core.service.play.player.AudioPlayerState;
 import de.kobich.audiosolutions.core.service.play.player.AudioPlayerResponse.PlayListFlowType;
-import de.kobich.component.file.FileDescriptor;
+import de.kobich.audiosolutions.core.service.play.player.AudioPlayerState;
 
+/**
+ * The playing thread. Only one thread can be active at any one time.
+ */
 public class AudioPlayerRunnable implements Runnable {
 	private static final Logger logger = Logger.getLogger(AudioPlayerRunnable.class);
 	private final AbstractAudioPlayer audioPlayer;
@@ -32,15 +34,13 @@ public class AudioPlayerRunnable implements Runnable {
 			logger.debug("Start playing...");
 			try {
 				long beginMillis = 0;
-				AudioPlayList playList = state.getPlayList();
+				IAudioPlayinglist playlist = state.getPlayList();
 				
-				Optional<FileDescriptor> fileOpt = playList.getCurrentFile();
+				Optional<File> fileOpt = playlist.getStartFile();
 				while (fileOpt.isPresent()) {
-					File file = fileOpt.get().getFile();
+					File file = fileOpt.get();
 					if (!file.exists() || file.length() == 0) {
-						playList.removeFile(fileOpt.get());
-						dispatcher.firePlayListModified(client);
-						fileOpt = playList.getFile(PlayListFlowType.TRACK_FINISHED);
+						fileOpt = playlist.getNextFile();
 						continue;
 					}
 					
@@ -48,7 +48,20 @@ public class AudioPlayerRunnable implements Runnable {
 					AudioPlayerResponse response = audioPlayer.playFile(file, beginMillis, client);
 					beginMillis = response.getNextBeginMillis();
 					PlayListFlowType type = response.getFlowType();
-					fileOpt = playList.getFile(type);
+					switch (type) {
+						case TRACK_FINISHED:
+						case NEXT_TRACK:
+							fileOpt = playlist.getNextFile();
+							break;
+						case PREVIOUS_TRACK:
+							fileOpt = playlist.getPreviousFile();
+							break;
+						case STOP:
+							fileOpt = Optional.empty();
+							break;
+						case REPEAT_TRACK:
+							break;
+					}
 				}
 			}
 			catch (AudioException exc) {

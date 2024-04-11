@@ -32,7 +32,7 @@ public class FileID3TagServiceTest {
 	
 	@BeforeEach
 	public void init() throws URISyntaxException {
-		this.testFile = new File(FileID3TagServiceTest.class.getResource("/mp3/mp3-no-tags.mp3").toURI());
+		this.testFile = new File(FileID3TagServiceTest.class.getResource("/mp3/01-mp3-no-tags.mp3").toURI());
 	}
 	
 	@Test

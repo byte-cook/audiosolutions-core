@@ -11,7 +11,7 @@ public interface IAudioPlayingService {
 	 * @param request
 	 * @throws AudioException
 	 */
-	void play(AudioPlayerClient client, AudioPlayList playList) throws AudioException;
+	void play(AudioPlayerClient client, IAudioPlayinglist playList) throws AudioException;
 
 	/**
 	 * Stops playing
@@ -32,11 +32,11 @@ public interface IAudioPlayingService {
 	void resume(AudioPlayerClient client) throws AudioException;
 	
 	/**
-	 * Skips playing to begin millis
+	 * Rewinds/fast forwards playing to begin millis
 	 * @param context
 	 * @param beginMillis
 	 */
-	void skip(AudioPlayerClient client, long beginMillis) throws AudioException;
+	void rewind(AudioPlayerClient client, long beginMillis) throws AudioException;
 	
 	/**
 	 * Jump to next track

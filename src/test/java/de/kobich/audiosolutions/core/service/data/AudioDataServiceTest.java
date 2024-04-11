@@ -201,7 +201,7 @@ public class AudioDataServiceTest {
 
 	@Test
 	public void testAddAudioDataByID3Tags() throws Exception {
-		File file = new File(FileID3TagServiceTest.class.getResource("/mp3/mp3-no-tags.mp3").toURI());
+		File file = new File(FileID3TagServiceTest.class.getResource("/mp3/01-mp3-no-tags.mp3").toURI());
 		FileDescriptor fd = new FileDescriptor(file, "/Rolling Stones/Beggars Banquet/07-sympathy for the devil.mp3");
 		AudioFileResult result = id3TagService.writeID3TagsByStructure(Set.of(fd), ID3TagVersion.ALL, "/<artist>/<album>/<trackNo>-<track>.mp3", PROGRESS_MONITOR);
 		Set<FileDescriptor> files = result.getSucceededFiles();

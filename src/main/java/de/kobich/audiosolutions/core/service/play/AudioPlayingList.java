@@ -1,23 +1,28 @@
 package de.kobich.audiosolutions.core.service.play;
 
+import java.io.File;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import de.kobich.audiosolutions.core.service.play.player.AudioPlayerResponse.PlayListFlowType;
-import de.kobich.component.file.FileDescriptor;
 
-public class AudioPlayList {
-	private final List<FileDescriptor> files;
+@Deprecated
+public class AudioPlayingList implements IAudioPlayinglist {
+	private final List<File> files;
 	private int index;
 	
-	public AudioPlayList() {
-		this.files = new ArrayList<FileDescriptor>();
+	public AudioPlayingList() {
+		this.files = new ArrayList<>();
 		this.index = 0;
 	}
 	
-	public synchronized Optional<FileDescriptor> getCurrentFile() {
+	@Override
+	public synchronized Optional<File> getStartFile() {
+		return getCurrentFile();
+	}
+	
+	public synchronized Optional<File> getCurrentFile() {
 		if (0 <= this.index && this.index < this.files.size()) {
 			return Optional.of(this.files.get(index));
 		}
@@ -28,11 +33,11 @@ public class AudioPlayList {
 		this.index = 0;
 	}
 	
-	public synchronized void setStartFile(FileDescriptor file) {
+	public synchronized void setStartFile(File file) {
 		this.index = Math.max(0, this.files.indexOf(file));
 	}
 	
-	public synchronized Optional<FileDescriptor> getFile(PlayListFlowType type) {
+	public synchronized Optional<File> getNextFile(PlayListFlowType type) {
 		switch (type) {
 		case TRACK_FINISHED:
 			return getNext(false);
@@ -48,7 +53,7 @@ public class AudioPlayList {
 		}
 	}
 	
-	private Optional<FileDescriptor> getNext(boolean loop) {
+	private Optional<File> getNext(boolean loop) {
 		if (loop) {
 			index = (index + 1) % files.size();
 		}
@@ -58,7 +63,7 @@ public class AudioPlayList {
 		return getCurrentFile();
 	}
 	
-	private Optional<FileDescriptor> getPrevious(boolean loop) {
+	private Optional<File> getPrevious(boolean loop) {
 		if (loop) {
 			if (index == 0) {
 				index = files.size() - 1;
@@ -73,25 +78,27 @@ public class AudioPlayList {
 		return getCurrentFile();
 	}
 	
-	public synchronized List<FileDescriptor> getFiles() {
-		return this.files;
-	}
+//	public synchronized List<File> getFiles() {
+//		return this.files;
+//	}
 	
-	public synchronized void addFile(FileDescriptor file) {
-		this.addFiles(Collections.singletonList(file));
-	}
-	
-	public synchronized void addFiles(List<FileDescriptor> files) {
+	public synchronized void addFiles(List<File> files) {
 		// do not allow duplicates
 		this.removeFiles(files);
 		this.files.addAll(files);
 	}
 	
-	public synchronized void removeFile(FileDescriptor file) {
-		this.removeFiles(Collections.singletonList(file));
-	}
-	
-	public synchronized void removeFiles(List<FileDescriptor> files) {
+	public synchronized void removeFiles(List<File> files) {
 		this.files.removeAll(files);
+	}
+
+	@Override
+	public Optional<File> getNextFile() {
+		return getNextFile(PlayListFlowType.NEXT_TRACK);
+	}
+
+	@Override
+	public Optional<File> getPreviousFile() {
+		return getNextFile(PlayListFlowType.PREVIOUS_TRACK);
 	}
 }

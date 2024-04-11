@@ -21,9 +21,9 @@ public class AudioPlayerClientDispatcher {
 		}
 	}
 
-	public synchronized void fireResume(AudioPlayerClient client, File file) {
+	public synchronized void fireResume(AudioPlayerClient client) {
 		for (IAudioPlayerListener l : client.getListenerList()) {
-			l.resume(file);
+			l.resume();
 		}
 	}
 
@@ -48,12 +48,6 @@ public class AudioPlayerClientDispatcher {
 	public synchronized void fireErrorOccured(AudioPlayerClient client, AudioException exc) {
 		for (IAudioPlayerListener l : client.getListenerList()) {
 			l.errorOccured(exc);
-		}
-	}
-
-	public synchronized void firePlayListModified(AudioPlayerClient client) {
-		for (IAudioPlayerListener l : client.getListenerList()) {
-			l.playListModified();
 		}
 	}
 

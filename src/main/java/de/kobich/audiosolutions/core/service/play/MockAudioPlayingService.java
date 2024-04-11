@@ -12,7 +12,7 @@ public class MockAudioPlayingService extends AbstractAudioPlayingService {
 	private MockAudioPlayer audioPlayer;
 
 	@Override
-	public synchronized void play(AudioPlayerClient client, AudioPlayList playList) throws AudioException {
+	public synchronized void play(AudioPlayerClient client, IAudioPlayinglist playList) throws AudioException {
 		super.play(audioPlayer, client, playList);
 	}
 	

@@ -15,7 +15,7 @@ public class JavaZoomAudioPlayingService extends AbstractAudioPlayingService {
 	private JavaZoomAudioPlayer audioPlayer;
 	
 	@Override
-	public synchronized void play(AudioPlayerClient client, AudioPlayList playList) throws AudioException {
+	public synchronized void play(AudioPlayerClient client, IAudioPlayinglist playList) throws AudioException {
 		super.play(this.audioPlayer, client, playList);
 	}
 
