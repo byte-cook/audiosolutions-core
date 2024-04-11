@@ -2,6 +2,7 @@ package de.kobich.audiosolutions.core.service.playlist;
 
 import java.beans.PropertyChangeSupport;
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
@@ -97,20 +98,32 @@ public class EditablePlaylist {
 	}
 	
 	public Set<EditablePlaylistFile> appendFilesAfter(Set<File> files, EditablePlaylistFile file) {
+		// sort all files in root directory
 		EditablePlaylistFolder rootFolder = createOrGetFolder(ROOT);
-
+		List<EditablePlaylistFile> rootFiles = new ArrayList<>(rootFolder.getFiles());
+		rootFiles.sort(EditablePlaylistFileComparator.INSTANCE);
+		
 		// increase sort order of all files after the given file
-		rootFolder.getFiles().stream()
-			// ignore given file
-			.filter(f -> !f.equals(file))
+		Long sortOrder = null; 
+		for (EditablePlaylistFile f : rootFiles) {
+			if (f.equals(file)) {
+				sortOrder = f.getSortOrder();
+				// ignore given file
+				continue;
+			}
+			
 			// apply only for files after the given file
-			.filter(f -> f.getSortOrder() >= file.getSortOrder())
-			// increase by 2
-			.forEach(f -> f.setSortOrder(f.getSortOrder() + 2));
+			if (sortOrder != null) {
+				// increase by 2
+				f.setSortOrder(f.getSortOrder() + 2);
+			}
+		}
+		if (sortOrder == null) {
+			throw new IllegalStateException("The given file <%s> is not in the list".formatted(file.getFileName()));
+		}
 		
 		// increase by 1
-		long sortOrder = file.getSortOrder() + 1;
-		return addFilesToFolder(files, rootFolder, sortOrder);
+		return addFilesToFolder(files, rootFolder, file.getSortOrder() + 1);
 	}
 	
 	private Set<EditablePlaylistFile> addFilesToFolder(Set<File> files, EditablePlaylistFolder folder, long sortOrder) {
@@ -163,7 +176,9 @@ public class EditablePlaylist {
 		
 		// add and remove selectedFolders 
 		for (EditablePlaylistFolder folder : sourceFolders) {
-			remove(folder);
+			if (!folder.equals(targetFolder)) {
+				remove(folder);	
+			}
 			files2Move.addAll(folder.getFiles());
 		}
 		// add selectedFiles
