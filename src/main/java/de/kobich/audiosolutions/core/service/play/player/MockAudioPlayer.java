@@ -27,10 +27,8 @@ public class MockAudioPlayer extends AbstractAudioPlayer {
 	@Override
 	public AudioPlayerResponse playFile(File file, long beginMillis, AudioPlayerClient client) throws AudioException {
 		logger.debug("Play file: " + file.getAbsolutePath());
-		
 		state.setPlaying(file, COMPLETE_MILLIS);
 
-		System.out.println();
 		boolean fireStopped = true;
 		for (long playedMillis = beginMillis; playedMillis < COMPLETE_MILLIS; ) {
 			// check player state

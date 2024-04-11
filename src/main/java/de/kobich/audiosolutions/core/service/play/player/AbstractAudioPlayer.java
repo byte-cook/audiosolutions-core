@@ -12,8 +12,7 @@ import de.kobich.audiosolutions.core.service.play.player.AudioPlayerResponse.Pla
 import de.kobich.audiosolutions.core.service.play.player.AudioPlayerState.UserAction;
 
 /**
- * Base audio player.
- * @author ckorn
+ * Base class for the real audio player implementation.
  */
 @Service
 public abstract class AbstractAudioPlayer {
@@ -51,10 +50,10 @@ public abstract class AbstractAudioPlayer {
 			state.setPlaying(state.getCurrentFile(), state.getTotalMillis());
 			state.resetUserAction();
 			return Optional.empty();
-		case SKIP:
+		case REWIND:
 			state.resetUserAction();
-			long skipBeginMillis = state.getSkipBeginMillis();
-			return Optional.of(new AudioPlayerResponse(PlayListFlowType.REPEAT_TRACK, skipBeginMillis));
+			long rewindBeginMillis = state.getRewindBeginMillis();
+			return Optional.of(new AudioPlayerResponse(PlayListFlowType.REPEAT_TRACK, rewindBeginMillis));
 		case STOP:
 			state.resetUserAction();
 			return Optional.of(new AudioPlayerResponse(PlayListFlowType.STOP));

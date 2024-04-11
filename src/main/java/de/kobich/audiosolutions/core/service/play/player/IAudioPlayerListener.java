@@ -15,7 +15,7 @@ public interface IAudioPlayerListener {
 	/**
 	 * Indicates if playing is resumed
 	 */
-	void resume(final File file);
+	void resume();
 	
 	/**
 	 * Indicates if playing is stopped
@@ -38,8 +38,4 @@ public interface IAudioPlayerListener {
 	 */
 	void errorOccured(final AudioException exc);
 	
-	/**
-	 * Indicates if the playlist is modified
-	 */
-	void playListModified();
 }

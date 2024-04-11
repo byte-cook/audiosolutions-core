@@ -8,9 +8,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import de.kobich.audiosolutions.core.service.AudioException;
-import de.kobich.audiosolutions.core.service.play.AudioPlayList;
 import de.kobich.audiosolutions.core.service.play.AudioPlayerClient;
 import de.kobich.audiosolutions.core.service.play.AudioPlayerClientDispatcher;
+import de.kobich.audiosolutions.core.service.play.IAudioPlayinglist;
 import jakarta.annotation.PostConstruct;
 
 /**
@@ -28,21 +28,30 @@ public class AudioPlayerState {
 	}
 
 	public static enum UserAction {
-		NONE, PAUSE, RESUME, STOP, SKIP, NEXT, PREVIOUS
+		NONE, PAUSE, RESUME, STOP, REWIND, NEXT, PREVIOUS
 	}
 
 	@Autowired
 	private AudioPlayerClientDispatcher dispatcher;
 
 	private AudioPlayerClient client;
-	private AudioPlayList playList;
+	private IAudioPlayinglist playList;
 	private PlayerState state;
 	private UserAction userAction;
-	private long skipBeginMillis;
+	private long rewindBeginMillis;
 	private File currentFile;
 	private long totalMillis;
+	/**
+	 * Lock for state changes
+	 */
 	private final Object STATE_MONITOR = new Object();
+	/**
+	 * Lock for user actions: Playing and stopping must take place one after the other
+	 */
 	private final Object USER_ACTION_MONITOR = new Object();
+	/**
+	 * Lock for reset action: as soon as a {@link UserAction} is completed, it is reset
+	 */
 	private final Object RESET_ACTION_MONITOR = new Object();
 
 	@PostConstruct
@@ -56,7 +65,7 @@ public class AudioPlayerState {
 	 * @param audioPlayerClient
 	 * @param playList
 	 */
-	public void initState(AudioPlayerClient audioPlayerClient, AudioPlayList playList) {
+	public void initState(AudioPlayerClient audioPlayerClient, IAudioPlayinglist playList) {
 		synchronized (STATE_MONITOR) {
 			this.client = audioPlayerClient;
 			this.playList = playList;
@@ -108,12 +117,12 @@ public class AudioPlayerState {
 		}
 	}
 
-	public void requestResume(File file) throws AudioException {
+	public void requestResume() throws AudioException {
 		synchronized (USER_ACTION_MONITOR) {
 			checkState(PlayerState.PAUSED);
 			this.userAction = UserAction.RESUME;
 			awaitResetAction();
-			dispatcher.fireResume(client, file);
+			dispatcher.fireResume(client);
 		}
 	}
 
@@ -127,15 +136,15 @@ public class AudioPlayerState {
 		}
 	}
 
-	public long getSkipBeginMillis() {
-		return skipBeginMillis;
+	public long getRewindBeginMillis() {
+		return rewindBeginMillis;
 	}
 
-	public void requestSkip(long beginMillis) throws AudioException {
+	public void requestRewind(long beginMillis) throws AudioException {
 		synchronized (USER_ACTION_MONITOR) {
 			checkState(PlayerState.PLAYING, PlayerState.PAUSED);
-			this.skipBeginMillis = beginMillis;
-			this.userAction = UserAction.SKIP;
+			this.rewindBeginMillis = beginMillis;
+			this.userAction = UserAction.REWIND;
 			awaitResetAction();
 		}
 	}
@@ -207,7 +216,7 @@ public class AudioPlayerState {
 		return this.client;
 	}
 
-	public AudioPlayList getPlayList() {
+	public IAudioPlayinglist getPlayList() {
 		return this.playList;
 	}
 
