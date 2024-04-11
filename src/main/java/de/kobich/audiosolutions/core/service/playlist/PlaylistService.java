@@ -15,6 +15,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.playlist.repository.Playlist;
@@ -24,6 +26,7 @@ import de.kobich.audiosolutions.core.service.playlist.repository.PlaylistReposit
 import de.kobich.commons.monitor.progress.IServiceProgressMonitor;
 import de.kobich.commons.monitor.progress.ProgressSupport;
 import de.kobich.commons.utils.SQLUtils;
+import de.kobich.commons.utils.SetUtils;
 import de.kobich.component.file.FileResult;
 import de.kobich.component.file.FileResultBuilder;
 
@@ -37,6 +40,7 @@ public class PlaylistService {
 		return new EditablePlaylist(name, system);
 	}
 	
+	@Transactional(rollbackFor=AudioException.class, readOnly = true)
 	public EditablePlaylist openPlaylist(Playlist playlist, @Nullable IServiceProgressMonitor monitor) throws AudioException {
 		ProgressSupport progressSupport = new ProgressSupport(monitor);
 		progressSupport.monitorBeginTask("Opening playlist...");
@@ -50,6 +54,7 @@ public class PlaylistService {
 		return ep;
 	}
 	
+	@Transactional(rollbackFor=AudioException.class)
 	public Playlist savePlaylist(EditablePlaylist ePlaylist, @Nullable IServiceProgressMonitor monitor) {
 		ProgressSupport progressSupport = new ProgressSupport(monitor);
 		progressSupport.monitorBeginTask("Saving playlist...");
@@ -61,10 +66,12 @@ public class PlaylistService {
 		return playlist;
 	}
 	
+	@Transactional(rollbackFor=AudioException.class, readOnly = true)
 	public Optional<Playlist> getSystemPlaylist(String name) {
 		return playlistRepository.findByNameAndSystem(name, true);
 	}
 	
+	@Transactional(rollbackFor=AudioException.class, readOnly = true)
 	public List<Playlist> getPlaylists(@Nullable String name) {
 		final boolean system = false;
 		if (StringUtils.isNotBlank(name)) {
@@ -75,6 +82,7 @@ public class PlaylistService {
 		}
 	}
 
+	@Transactional(propagation = Propagation.NOT_SUPPORTED)
 	public FileResult copyFilesToDir(Set<EditablePlaylistFile> allFiles, File targetDir, @Nullable IServiceProgressMonitor monitor) throws AudioException {
 		try {
 			ProgressSupport progressSupport = new ProgressSupport(monitor);
@@ -82,12 +90,13 @@ public class PlaylistService {
 			
 			FileResultBuilder fileResultBuilder = new FileResultBuilder();
 			for (EditablePlaylistFile file : allFiles) {
-				progressSupport.monitorSubTask("Copying file: " + file.getFile().getAbsolutePath(), 1);
+				final File srcFile = file.getFile();
+				progressSupport.monitorSubTask("Copying file: " + srcFile.getAbsolutePath(), 1);
 				
 				File relativePath = new File(file.getFolder().getPath(), file.getFileName());
 				File targetFile = new File(targetDir, relativePath.getPath());
-				if (file.getFile().exists() && !targetFile.exists()) {
-					FileUtils.copyFile(file.getFile(), targetFile);
+				if (srcFile.exists() && !targetFile.exists()) {
+					FileUtils.copyFile(srcFile, targetFile);
 					fileResultBuilder.createdFiles.add(targetFile);
 				}
 				else {
@@ -101,9 +110,9 @@ public class PlaylistService {
 			logger.error(e.getMessage(), e);
 			throw new AudioException(AudioException.IO_ERROR);
 		}
-		
 	}
 	
+	@Transactional(rollbackFor=AudioException.class)
 	public void deletePlaylists(Collection<Playlist> playlists, @Nullable IServiceProgressMonitor monitor) {
 		ProgressSupport progressSupport = new ProgressSupport(monitor);
 		progressSupport.monitorBeginTask("Deleting playlist...");
@@ -140,11 +149,14 @@ public class PlaylistService {
 				file.setSortOrder(efile.getSortOrder());
 				newFiles.add(file);
 			}
-			folder.setFiles(newFiles);
+			SetUtils.syncSets(newFiles, folder.getFiles());
 		}
-		playlist.setFolders(newFolders);
+		SetUtils.syncSets(newFolders, playlist.getFolders());
+		
 		logger.info("Editable playlist mapped to: " + playlist);
 		return playlist;
 	}
+	
+	
 
 }
