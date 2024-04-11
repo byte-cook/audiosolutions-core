@@ -218,7 +218,7 @@ public class AudioTextSearchServiceTest {
 					threadWatch.start();
 					List<Artist> artists = textSearchService.searchSimultaneously("roll sympa", 20, null).getArtists();
 					System.out.println(index + ": " + artists);
-					System.out.println("Thread " + index + " takes: " + watch.getTime(TimeUnit.MILLISECONDS));
+					System.out.println("Thread " + index + " takes: " + threadWatch.getTime(TimeUnit.MILLISECONDS));
 				}
 				catch (AudioException e) {
 					e.printStackTrace();
