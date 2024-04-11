@@ -43,18 +43,16 @@ public class AudioSolutionsSpringConfig {
 	@Bean
 	public DataSource dataSource() {
 		AtomikosNonXADataSourceBean dataSource = new AtomikosNonXADataSourceBean();
-    	dataSource.setDriverClassName(JDBCDriver.class.getName());
-//    	dataSource.setUrl("jdbc:hsqldb:mem:testdb;DB_CLOSE_DELAY=-1");
+		dataSource.setDriverClassName(JDBCDriver.class.getName());
 		DBConnectionSetting setting = AudioSolutions.getDbConnectionSetting();
-    	dataSource.setUrl(setting.url());
-    	dataSource.setUser(setting.user());
-    	dataSource.setPassword(setting.password());
-    	dataSource.setMinPoolSize(5);
-    	dataSource.setMaxPoolSize(20);
-    	dataSource.setUniqueResourceName("AudioSolutionsDB");
-    	dataSource.setLocalTransactionMode(true);
-    	return dataSource;
-		
+		dataSource.setUrl(setting.url());
+		dataSource.setUser(setting.user());
+		dataSource.setPassword(setting.password());
+		dataSource.setMinPoolSize(5);
+		dataSource.setMaxPoolSize(20);
+		dataSource.setUniqueResourceName("AudioSolutionsDB");
+		dataSource.setLocalTransactionMode(true);
+		return dataSource;
 	}
 
 	@Bean
@@ -109,12 +107,7 @@ public class AudioSolutionsSpringConfig {
         hibernateProperties.put(AvailableSettings.FORMAT_SQL, env.getProperty(AudioSolutions.DB_DEBUG_PROP, Boolean.class, false));
         hibernateProperties.put(AvailableSettings.USE_SQL_COMMENTS, false);
         hibernateProperties.put(AvailableSettings.GENERATE_STATISTICS, true);
-//        if (env.getProperty(AudioSolutions.DB_INMEMORY_PROP, Boolean.class, false)) {
-//        	hibernateProperties.put(AvailableSettings.DIALECT, HSQLInMemoryDialect.class.getName());
-//        }
-//        else {
-        	hibernateProperties.put(AvailableSettings.DIALECT, HSQLDialect.class.getName());
-//        }
+       	hibernateProperties.put(AvailableSettings.DIALECT, HSQLDialect.class.getName());
         	
         if (!env.getRequiredProperty(AudioSolutions.DB_EXISTS_PROP, Boolean.class)) {
         	hibernateProperties.put(AvailableSettings.HBM2DDL_AUTO, Action.CREATE.getExternalHbm2ddlName());
