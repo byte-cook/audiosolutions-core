@@ -1,5 +1,8 @@
 package de.kobich.audiosolutions.core;
 
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.log4j.Logger;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
@@ -46,7 +49,10 @@ class AudioSolutionsSpringContext {
 		try {
 			// init spring
 			if (applicationContext == null) {
+				StopWatch stopWatch = new StopWatch();
+				stopWatch.start();
 				this.applicationContext = new AnnotationConfigApplicationContext(AudioSolutionsSpringConfig.class);
+				logger.info("Initalizing spring context takes %dms".formatted(stopWatch.getTime(TimeUnit.MILLISECONDS)));
 			}
 		}
 		finally {
