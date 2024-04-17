@@ -32,17 +32,27 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	
 	/**
 	 * Returns all files in the root folder
-	 * @return
 	 */
-	public synchronized List<EditablePlaylistFile> getSortedFiles() {
+	public synchronized Set<EditablePlaylistFile> getFiles() {
 		EditablePlaylistFolder rootFolder = playlist.getFolder(EditablePlaylist.ROOT).orElse(null);
 		if (rootFolder == null) {
-			return List.of();
+			return Set.of();
 		}
-		
-		List<EditablePlaylistFile> files = new ArrayList<>(rootFolder.getFiles());
+		return rootFolder.getFiles();
+	}
+	
+	/**
+	 * Returns all files in the root folder as sorted list
+	 */
+	public synchronized List<EditablePlaylistFile> getFilesSorted() {
+		Set<EditablePlaylistFile> allFiles = getFiles();
+		List<EditablePlaylistFile> files = new ArrayList<>(allFiles);
 		files.sort(EditablePlaylistFileComparator.INSTANCE);
 		return files;
+	}
+	
+	public synchronized boolean isEmpty() {
+		return getFiles().isEmpty();
 	}
 	
 	public synchronized Set<EditablePlaylistFile> appendFiles(Set<File> files) {
@@ -76,7 +86,7 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	@Override
 	public synchronized Optional<File> getStartFile() {
 		return getCurrentFile().or(() -> {
-			List<EditablePlaylistFile> files = getSortedFiles();
+			List<EditablePlaylistFile> files = getFilesSorted();
 			if (!files.isEmpty()) {
 				currentFile = files.get(0);
 				return Optional.of(currentFile.getFile());
@@ -105,7 +115,7 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	}
 
 	private void goToNext() {
-		List<EditablePlaylistFile> files = getSortedFiles();
+		List<EditablePlaylistFile> files = getFilesSorted();
 		if (files.isEmpty()) {
 			this.currentFile = null;
 		}
@@ -129,7 +139,7 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	}
 	
 	private void goToPrevious() {
-		List<EditablePlaylistFile> files = getSortedFiles();
+		List<EditablePlaylistFile> files = getFilesSorted();
 		if (files.isEmpty()) {
 			this.currentFile = null;
 		}
