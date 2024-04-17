@@ -119,7 +119,7 @@ public class EditablePlaylist {
 			}
 		}
 		if (sortOrder == null) {
-			throw new IllegalStateException("The given file <%s> is not in the list".formatted(file.getFileName()));
+			throw new IllegalStateException("The given file <%s> is not in the list".formatted(file.getName()));
 		}
 		
 		// increase by 1
@@ -144,7 +144,7 @@ public class EditablePlaylist {
 		Set<EditablePlaylistFile> newFiles = new HashSet<>();
 		for (EditablePlaylistFile file : files) {
 			EditablePlaylistFolder newFolder = createOrGetFolder(file.getFolder().getPath());
-			EditablePlaylistFile newFile = new EditablePlaylistFile(file.getFileName(), newFolder, file.getFile(), EditablePlaylistFile.DEFAULT_SORT_ORDER);
+			EditablePlaylistFile newFile = new EditablePlaylistFile(file.getName(), newFolder, file.getFile(), EditablePlaylistFile.DEFAULT_SORT_ORDER);
 			newFolder.getFiles().add(newFile);
 			support.firePropertyChange(PROP_ADD, null, file);
 			newFiles.add(newFile);
@@ -189,7 +189,7 @@ public class EditablePlaylist {
 			// remove existing file
 			remove(file);
 			// create new file in target folder
-			EditablePlaylistFile newFile = new EditablePlaylistFile(file.getFileName(), moveToFolder, file.getFile(), file.getSortOrder());
+			EditablePlaylistFile newFile = new EditablePlaylistFile(file.getName(), moveToFolder, file.getFile(), file.getSortOrder());
 			moveToFolder.getFiles().add(newFile);
 			newFiles.add(newFile);
 		}
@@ -198,7 +198,7 @@ public class EditablePlaylist {
 	}
 	
 	public Optional<EditablePlaylistFile> renameFile(EditablePlaylistFile oldFile, String newFileName) {
-		if (oldFile.getFileName().equals(newFileName)) {
+		if (oldFile.getName().equals(newFileName)) {
 			return Optional.empty();
 		}
 		

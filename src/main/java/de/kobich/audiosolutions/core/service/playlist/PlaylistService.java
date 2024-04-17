@@ -93,7 +93,7 @@ public class PlaylistService {
 				final File srcFile = file.getFile();
 				progressSupport.monitorSubTask("Copying file: " + srcFile.getAbsolutePath(), 1);
 				
-				File relativePath = new File(file.getFolder().getPath(), file.getFileName());
+				File relativePath = new File(file.getFolder().getPath(), file.getName());
 				File targetFile = new File(targetDir, relativePath.getPath());
 				if (srcFile.exists() && !targetFile.exists()) {
 					FileUtils.copyFile(srcFile, targetFile);
@@ -144,7 +144,7 @@ public class PlaylistService {
 			// file
 			Set<PlaylistFile> newFiles = new HashSet<>();
 			for (EditablePlaylistFile efile : efolder.getFiles()) {
-				PlaylistFile newFile = new PlaylistFile(efile.getFileName(), efile.getFile().getAbsolutePath());
+				PlaylistFile newFile = new PlaylistFile(efile.getName(), efile.getFile().getAbsolutePath());
 				PlaylistFile file = folder.getFiles().stream().filter(f -> f.equals(newFile)).findFirst().orElse(newFile);
 				file.setSortOrder(efile.getSortOrder());
 				newFiles.add(file);

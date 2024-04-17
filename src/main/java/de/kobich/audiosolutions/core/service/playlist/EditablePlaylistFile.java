@@ -12,15 +12,18 @@ import lombok.Setter;
 import lombok.ToString;
 
 @Getter
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class EditablePlaylistFile {
 	public static final long DEFAULT_SORT_ORDER = 0;
 	
 	@ToString.Include
-	private final String fileName;
+	@EqualsAndHashCode.Include
+	private final String name;
 	@ToString.Include
+	@EqualsAndHashCode.Include
 	private final EditablePlaylistFolder folder;
+	@EqualsAndHashCode.Include
 	private final File file;
 	
 	@Nullable
@@ -28,7 +31,7 @@ public class EditablePlaylistFile {
 	private Long sortOrder;
 	
 	protected EditablePlaylistFile(String fileName, EditablePlaylistFolder folder, File file, long sortOrder) {
-		this.fileName = normalizeAndValidateName(fileName);
+		this.name = normalizeAndValidateName(fileName);
 		this.folder = folder;
 		this.file = file;
 		this.sortOrder = sortOrder;

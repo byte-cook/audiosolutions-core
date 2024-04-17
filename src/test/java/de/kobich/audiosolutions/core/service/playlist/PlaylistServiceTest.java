@@ -85,7 +85,7 @@ public class PlaylistServiceTest {
 		ef1 = ep.getFolders().iterator().next();
 		assertEquals("/folder 1", ef1.getPath());
 		assertEquals(1, ef1.getFiles().size());
-		assertEquals(file1.getName(), ef1.getFiles().iterator().next().getFileName());
+		assertEquals(file1.getName(), ef1.getFiles().iterator().next().getName());
 	}
 	
 	@Test
@@ -119,7 +119,7 @@ public class PlaylistServiceTest {
 		EditablePlaylistFolder root = ep.getFolder(EditablePlaylist.ROOT).orElse(null);
 		assertNotNull(root);
 		assertEquals(2, root.getFiles().size());
-		EditablePlaylistFile efile3 = root.getFiles().stream().filter(f -> f.getFileName().equals(file3.getName())).findFirst().orElse(null);
+		EditablePlaylistFile efile3 = root.getFiles().stream().filter(f -> f.getName().equals(file3.getName())).findFirst().orElse(null);
 		assertNotNull(efile3);
 		ep.remove(efile3);
 		playlistService.savePlaylist(ep, null);
