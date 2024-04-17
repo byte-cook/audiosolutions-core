@@ -60,17 +60,17 @@ public class AudioPlayingServiceTest {
 
 		// append file1 + file2
 		list.appendFiles(Set.of(file1, file2));
-		assertEquals(List.of(file1, file2), list.getSortedFiles().stream().map(EditablePlaylistFile::getFile).toList());
+		assertEquals(List.of(file1, file2), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
 		assertEquals(file1, list.getNextFile().orElse(null));
 		assertEquals(file1, list.getStartFile().orElse(null));
 		// append file4
 		list.appendFiles(Set.of(file4));
-		assertEquals(List.of(file1, file2, file4), list.getSortedFiles().stream().map(EditablePlaylistFile::getFile).toList());
+		assertEquals(List.of(file1, file2, file4), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
 		assertEquals(file2, list.getNextFile().orElse(null));
 		assertEquals(file2, list.getCurrentFile().orElse(null));
 		// appendAfterCurrent file3
 		list.appendFilesAfterCurrent(Set.of(file3));
-		assertEquals(List.of(file1, file2, file3, file4), list.getSortedFiles().stream().map(EditablePlaylistFile::getFile).toList());
+		assertEquals(List.of(file1, file2, file3, file4), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
 		list.getNextFile();
 		assertEquals(file3, list.getCurrentFile().orElse(null));
 		list.getNextFile();
@@ -82,22 +82,37 @@ public class AudioPlayingServiceTest {
 		list.getPreviousFile();
 		assertEquals(file3, list.getCurrentFile().orElse(null));
 		// remove file3
-		EditablePlaylistFile eFile3 = list.getSortedFiles().get(2);
+		EditablePlaylistFile eFile3 = list.getFilesSorted().get(2);
 		assertEquals(file3, eFile3.getFile());
 		list.removeFiles(Set.of(eFile3));
-		assertEquals(List.of(file1, file2, file4), list.getSortedFiles().stream().map(EditablePlaylistFile::getFile).toList());
+		assertEquals(List.of(file1, file2, file4), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
 		assertEquals(file3, list.getCurrentFile().orElse(null));
 		assertEquals(file1, list.getNextFile().orElse(null));
 		assertEquals(file2, list.getNextFile().orElse(null));
 		// remove file2
-		EditablePlaylistFile eFile2 = list.getSortedFiles().get(1);
+		EditablePlaylistFile eFile2 = list.getFilesSorted().get(1);
 		assertEquals(file2, eFile2.getFile());
 		list.removeFiles(Set.of(eFile2));
-		assertEquals(List.of(file1, file4), list.getSortedFiles().stream().map(EditablePlaylistFile::getFile).toList());
+		assertEquals(List.of(file1, file4), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
 		assertEquals(file2, list.getCurrentFile().orElse(null));
 		assertEquals(file1, list.getPreviousFile().orElse(null));
-		list.setStartFile(list.getSortedFiles().get(1));
+		list.setStartFile(list.getFilesSorted().get(1));
 		assertEquals(file4, list.getCurrentFile().orElse(null));
+	}
+	
+	@Test
+	public void testPersistedPlayingListDuplicates() {
+		final File file1 = new File("file1.ogg").getAbsoluteFile();
+		final File file2 = new File("file2.ogg").getAbsoluteFile();
+
+		EditablePlaylist editablePlaylist = playlistService.createNewPlaylist("_", true);
+		PersistableAudioPlayingList list = new PersistableAudioPlayingList(editablePlaylist);
+		list.appendFiles(Set.of(file1, file2));
+		assertEquals(2, list.getFilesSorted().size());
+		list.appendFiles(Set.of(file1, file2));
+		list.getFilesSorted().forEach(f -> System.out.println(f));
+		assertEquals(2, list.getFiles().size());
+		assertEquals(2, list.getFilesSorted().size());
 	}
 	
 	@Test
