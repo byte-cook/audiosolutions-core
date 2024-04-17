@@ -33,6 +33,7 @@ public class PlaylistFile {
 	private String name;
 	
 	@Column(name = "file_path", unique=false, nullable=false)
+	@EqualsAndHashCode.Include
 	private String filePath;
 	
 	@Column(name = "sort_order", unique=false, nullable=false)
