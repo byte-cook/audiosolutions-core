@@ -31,6 +31,19 @@ public class TestUtils {
 		return outputDir;
 	}
 	
+	public static File getOutputDir(String name, boolean deleteDir, File sourceDir) throws IOException, URISyntaxException {
+		File outputDir = getOutputDir(name, deleteDir);
+		FileUtils.copyDirectory(sourceDir, outputDir);
+		return outputDir;
+	}
+	
+	public static File getOutputFile(String name, boolean deleteDir, File sourceFile) throws IOException, URISyntaxException {
+		File outputDir = getOutputDir(name, deleteDir);
+		File outputFile = new File(outputDir, sourceFile.getName());
+		FileUtils.copyFile(sourceFile, outputFile);
+		return outputFile;
+	}
+	
 	public static FileDescriptor createFileDescriptor(String fileName) {
 		return new FileDescriptor(new File(fileName), fileName);
 	}

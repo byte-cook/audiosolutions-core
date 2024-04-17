@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Map;
@@ -31,8 +32,9 @@ public class FileID3TagServiceTest {
 	private File testFile;
 	
 	@BeforeEach
-	public void init() throws URISyntaxException {
-		this.testFile = new File(FileID3TagServiceTest.class.getResource("/mp3/01-mp3-no-tags.mp3").toURI());
+	public void init() throws URISyntaxException, IOException {
+		File mp3File = new File(FileID3TagServiceTest.class.getResource("/mp3/01-mp3-no-tags.mp3").toURI());
+		this.testFile = TestUtils.getOutputFile("id3tag", true, mp3File);
 	}
 	
 	@Test
