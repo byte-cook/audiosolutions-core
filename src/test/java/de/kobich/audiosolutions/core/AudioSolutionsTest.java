@@ -211,7 +211,7 @@ public class AudioSolutionsTest {
 //		searchService.searchArtists("roll sympa", 20, null);
 //		searchService.searchAlbums("roll sympa", 20, null);
 //		searchService.searchTracks("roll sympa", 20, null);
-		AudioTextSearchResult res = searchService.searchSimultaneously("album:grammy", 20, null);
+		AudioTextSearchResult res = searchService.searchSimultaneously("album:grammy", 20);
 //		AudioTextSearchResult res = searchService.searchSimultaneously("stones track:sym", 20, null);
 		System.out.println("############## Search finished.");
 		System.out.println(res.getArtists().size() + " artists: ");
