@@ -13,7 +13,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.ResourceBundle;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Level;
@@ -52,7 +51,6 @@ public class AudioSolutions {
 	 */
 	@Getter
 	private static File coverArtRootDir;
-	private static ResourceBundle applicationResourceBundle;
 	
 	private static final AudioSolutionsSpringContext springContext = new AudioSolutionsSpringContext();
 	
@@ -188,7 +186,6 @@ public class AudioSolutions {
 	public static void shutdown() {
 		AudioSolutions.springContext.close();
 		
-		AudioSolutions.applicationResourceBundle = null;
 		AudioSolutions.commandDefinitionDir = null;
 		AudioSolutions.coverArtRootDir = null;
 		AudioSolutions.dataRootDir = null;
@@ -197,18 +194,6 @@ public class AudioSolutions {
 		AudioSolutions.lock = null;
 		AudioSolutions.properties = null;
 		AudioSolutions.propertiesFile = null;
-	}
-	
-	/**
-	 * Returns the application resource bundle containing application-wide constants
-	 * @return bundle
-	 */
-	public static ResourceBundle getApplicationResourceBundle() {
-		checkInitialized();
-		if (applicationResourceBundle == null) {
-			applicationResourceBundle = ResourceBundle.getBundle("resources.spring.application");
-		}
-		return applicationResourceBundle;
 	}
 	
 	/**
