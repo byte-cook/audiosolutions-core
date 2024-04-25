@@ -25,7 +25,6 @@ import lombok.ToString;
 /**
  * Editable Playlist. Changes to this playlist are only possible by this class.
  */
-@Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class EditablePlaylist {
@@ -40,18 +39,21 @@ public class EditablePlaylist {
 	
 	@EqualsAndHashCode.Include
 	@ToString.Include
+	@Getter
 	private String name;
 	@EqualsAndHashCode.Include
+	@Getter
 	private final boolean system;
 	private final Set<EditablePlaylistFolder> folders;
-	private final PropertyChangeSupport support;
+	@Getter
+	private final PropertyChangeSupport propertyChangeSupport;
 	
 	protected EditablePlaylist(String name, boolean system) {
 		this.id = null;
 		this.name = name;
 		this.system = system;
 		this.folders = new HashSet<>();
-		this.support = new PropertyChangeSupport(this);
+		this.propertyChangeSupport = new PropertyChangeSupport(this);
 	}
 	
 	protected EditablePlaylist(Playlist playlist) {
@@ -65,10 +67,10 @@ public class EditablePlaylist {
 			
 			for (PlaylistFile file : folder.getFiles()) {
 				EditablePlaylistFile efile = new EditablePlaylistFile(file.getName(), efolder, new File(file.getFilePath()), EditablePlaylistFile.DEFAULT_SORT_ORDER);
-				efolder.getFiles().add(efile);
+				efolder.getModifiableFiles().add(efile);
 			}
 		}
-		this.support = new PropertyChangeSupport(this);
+		this.propertyChangeSupport = new PropertyChangeSupport(this);
 	}
 	
 	public Optional<Long> getId() {
@@ -76,8 +78,12 @@ public class EditablePlaylist {
 	}
 	
 	public void setName(String name) {
-		support.firePropertyChange(PROP_MODIFIED, this.name, name);
+		propertyChangeSupport.firePropertyChange(PROP_MODIFIED, this.name, name);
 		this.name = name;
+	}
+	
+	public Set<EditablePlaylistFolder> getFolders() {
+		return Collections.unmodifiableSet(this.folders);
 	}
 	
 	/**
@@ -91,22 +97,39 @@ public class EditablePlaylist {
 		return addFilesToFolder(files, folder, EditablePlaylistFile.DEFAULT_SORT_ORDER);
 	}
 	
+	/**
+	 * Appends files to the end of the playlist. If a file to be appended is already in the list, this file is moved to the end of the list.
+	 * @param files
+	 * @return
+	 */
 	public Set<EditablePlaylistFile> appendFiles(Set<File> files) {
 		EditablePlaylistFolder rootFolder = createOrGetFolder(ROOT);
-		long sortOrder = rootFolder.getFiles().size();
-		return addFilesToFolder(files, rootFolder, sortOrder);
+		// remove files that already are in the list
+		files.forEach(f -> remove(new EditablePlaylistFile(f.getName(), rootFolder, f, EditablePlaylistFile.DEFAULT_SORT_ORDER)));
+		// find max. sort order
+		long sortOrder = rootFolder.getFiles().stream().mapToLong(EditablePlaylistFile::getSortOrder).max().orElse(EditablePlaylistFile.DEFAULT_SORT_ORDER);
+		return addFilesToFolder(files, rootFolder, sortOrder + 1);
 	}
 	
-	public Set<EditablePlaylistFile> appendFilesAfter(Set<File> files, EditablePlaylistFile file) {
-		// sort all files in root directory
+	/**
+	 * Appends files after the given <code>afterFile</code>. If a file to be appended is already in the list, this file is also moved.
+	 * @param files
+	 * @param afterFile
+	 * @return
+	 */
+	public Set<EditablePlaylistFile> appendFilesAfter(Set<File> files, EditablePlaylistFile afterFile) {
 		EditablePlaylistFolder rootFolder = createOrGetFolder(ROOT);
+		// remove files that already are in the list
+		files.stream().filter(f -> !f.equals(afterFile.getFile())).forEach(f -> remove(new EditablePlaylistFile(f.getName(), rootFolder, f, EditablePlaylistFile.DEFAULT_SORT_ORDER)));
+		
+		// sort all files in root directory
 		List<EditablePlaylistFile> rootFiles = new ArrayList<>(rootFolder.getFiles());
 		rootFiles.sort(EditablePlaylistFileComparator.INSTANCE);
 		
 		// increase sort order of all files after the given file
 		Long sortOrder = null; 
 		for (EditablePlaylistFile f : rootFiles) {
-			if (f.equals(file)) {
+			if (f.equals(afterFile)) {
 				sortOrder = f.getSortOrder();
 				// ignore given file
 				continue;
@@ -119,11 +142,11 @@ public class EditablePlaylist {
 			}
 		}
 		if (sortOrder == null) {
-			throw new IllegalStateException("The given file <%s> is not in the list".formatted(file.getName()));
+			sortOrder = EditablePlaylistFile.DEFAULT_SORT_ORDER;
 		}
 		
 		// increase by 1
-		return addFilesToFolder(files, rootFolder, file.getSortOrder() + 1);
+		return addFilesToFolder(files, rootFolder, afterFile.getSortOrder() + 1);
 	}
 	
 	private Set<EditablePlaylistFile> addFilesToFolder(Set<File> files, EditablePlaylistFolder folder, long sortOrder) {
@@ -131,9 +154,9 @@ public class EditablePlaylist {
 		for (File file : files) {
 			EditablePlaylistFile pf = new EditablePlaylistFile(file.getName(), folder, file.getAbsoluteFile(), sortOrder);
 			newFiles.add(pf);
-			support.firePropertyChange(PROP_ADD, null, file);
+			propertyChangeSupport.firePropertyChange(PROP_ADD, null, file);
 		}
-		folder.getFiles().addAll(newFiles);
+		folder.getModifiableFiles().addAll(newFiles);
 		return newFiles;
 	}
 	
@@ -145,8 +168,8 @@ public class EditablePlaylist {
 		for (EditablePlaylistFile file : files) {
 			EditablePlaylistFolder newFolder = createOrGetFolder(file.getFolder().getPath());
 			EditablePlaylistFile newFile = new EditablePlaylistFile(file.getName(), newFolder, file.getFile(), EditablePlaylistFile.DEFAULT_SORT_ORDER);
-			newFolder.getFiles().add(newFile);
-			support.firePropertyChange(PROP_ADD, null, file);
+			newFolder.getModifiableFiles().add(newFile);
+			propertyChangeSupport.firePropertyChange(PROP_ADD, null, file);
 			newFiles.add(newFile);
 		}
 		return newFiles;
@@ -160,7 +183,7 @@ public class EditablePlaylist {
 		EditablePlaylistFolder folder = new EditablePlaylistFolder(relativePath);
 		boolean added = folders.add(folder);
 		if (added) {
-			support.firePropertyChange(PROP_MODIFIED, null, folder);
+			propertyChangeSupport.firePropertyChange(PROP_MODIFIED, null, folder);
 		}
 		else {
 			folder = getFolder(folder.getPath()).orElseThrow();
@@ -190,10 +213,10 @@ public class EditablePlaylist {
 			remove(file);
 			// create new file in target folder
 			EditablePlaylistFile newFile = new EditablePlaylistFile(file.getName(), moveToFolder, file.getFile(), file.getSortOrder());
-			moveToFolder.getFiles().add(newFile);
+			moveToFolder.getModifiableFiles().add(newFile);
 			newFiles.add(newFile);
 		}
-		support.firePropertyChange(PROP_MODIFIED, null, moveToFolder);
+		propertyChangeSupport.firePropertyChange(PROP_MODIFIED, null, moveToFolder);
 		return newFiles;
 	}
 	
@@ -204,10 +227,10 @@ public class EditablePlaylist {
 		
 		EditablePlaylistFile.normalizeAndValidateName(newFileName);
 		EditablePlaylistFolder folder = oldFile.getFolder();
-		if (folder.getFiles().remove(oldFile)) {
+		if (folder.getModifiableFiles().remove(oldFile)) {
 			EditablePlaylistFile newFile = new EditablePlaylistFile(newFileName, folder, oldFile.getFile(), oldFile.getSortOrder());
-			folder.getFiles().add(newFile);
-			support.firePropertyChange(PROP_MODIFIED, oldFile, newFile);
+			folder.getModifiableFiles().add(newFile);
+			propertyChangeSupport.firePropertyChange(PROP_MODIFIED, oldFile, newFile);
 			return Optional.of(newFile);
 		}
 		return Optional.empty();
@@ -229,7 +252,7 @@ public class EditablePlaylist {
 	
 	public boolean remove(EditablePlaylistFolder folder) {
 		if (this.folders.remove(folder)) {
-			support.firePropertyChange(PROP_REMOVE, folder, null);
+			propertyChangeSupport.firePropertyChange(PROP_REMOVE, folder, null);
 			return true;
 		}
 		return false;
@@ -237,8 +260,17 @@ public class EditablePlaylist {
 	
 	public boolean remove(EditablePlaylistFile file) {
 		EditablePlaylistFolder folder = file.getFolder();
-		if (folder.getFiles().remove(file)) {
-			support.firePropertyChange(PROP_REMOVE, file, null);
+		if (folder.getModifiableFiles().remove(file)) {
+			propertyChangeSupport.firePropertyChange(PROP_REMOVE, file, null);
+			return true;
+		}
+		return false;
+	}
+	
+	public boolean removeAll() {
+		if (!this.folders.isEmpty()) {
+			this.folders.clear();
+			propertyChangeSupport.firePropertyChange(PROP_REMOVE, this.folders, null);
 			return true;
 		}
 		return false;

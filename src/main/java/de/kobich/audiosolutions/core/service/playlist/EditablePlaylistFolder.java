@@ -2,6 +2,7 @@ package de.kobich.audiosolutions.core.service.playlist;
 
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -10,12 +11,12 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
 
-@Getter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @ToString(onlyExplicitlyIncluded = true)
 public class EditablePlaylistFolder {
 	@EqualsAndHashCode.Include
 	@ToString.Include
+	@Getter
 	private final String path;
 	private final Set<EditablePlaylistFile> files;
 	
@@ -32,6 +33,14 @@ public class EditablePlaylistFolder {
 		// validate path
 		Paths.get(tmpRelPath);
 		return tmpRelPath;
+	}
+
+	protected Set<EditablePlaylistFile> getModifiableFiles() {
+		return this.files;
+	}
+	
+	public Set<EditablePlaylistFile> getFiles() {
+		return Collections.unmodifiableSet(this.files);
 	}
 
 }
