@@ -5,7 +5,12 @@ import java.util.Set;
 
 import de.kobich.audiosolutions.core.service.AudioAttribute;
 import de.kobich.audiosolutions.core.service.mp3.id3.MP3ID3TagType;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
+@Getter
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public enum RenameFileDescriptorAttributeType {
 	FILE_SIZE("<file-size>"),
 	FILE_BASE_NAME("<file-base-name>"),
@@ -28,8 +33,8 @@ public enum RenameFileDescriptorAttributeType {
 	;
 	
 	private final String name;
-	private final MP3ID3TagType tagType;
 	private final AudioAttribute attribute;
+	private final MP3ID3TagType tagType;
 	
 	private RenameFileDescriptorAttributeType(String name) {
 		this(name, null, null);
@@ -40,23 +45,7 @@ public enum RenameFileDescriptorAttributeType {
 	private RenameFileDescriptorAttributeType(String name, MP3ID3TagType tagType) {
 		this(name, null, tagType);
 	}
-	private RenameFileDescriptorAttributeType(String name, AudioAttribute attribute, MP3ID3TagType tagType) {
-		this.name = name;
-		this.tagType = tagType;
-		this.attribute = attribute;
-	}
 	
-	public MP3ID3TagType getTagType() {
-		return tagType;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public AudioAttribute getAttribute() {
-		return attribute;
-	}
 	public static RenameFileDescriptorAttributeType getByName(String name) {
 		for (RenameFileDescriptorAttributeType md : RenameFileDescriptorAttributeType.values()) {
 			if (md.getName().equals(name)) {
