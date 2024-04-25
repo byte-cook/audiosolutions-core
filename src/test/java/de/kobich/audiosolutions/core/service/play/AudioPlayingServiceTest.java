@@ -1,11 +1,13 @@
 package de.kobich.audiosolutions.core.service.play;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.File;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -45,6 +47,7 @@ public class AudioPlayingServiceTest {
 		assertNull(list.getCurrentFile().orElse(null));
 		assertNull(list.getNextFile().orElse(null));
 		assertNull(list.getPreviousFile().orElse(null));
+		assertFalse(list.removeAll());
 	}
 	
 	@Test
@@ -98,6 +101,9 @@ public class AudioPlayingServiceTest {
 		assertEquals(file1, list.getPreviousFile().orElse(null));
 		list.setStartFile(list.getFilesSorted().get(1));
 		assertEquals(file4, list.getCurrentFile().orElse(null));
+		// remove all
+		list.removeAll();
+		assertTrue(list.getFilesSorted().isEmpty());
 	}
 	
 	@Test
@@ -113,6 +119,33 @@ public class AudioPlayingServiceTest {
 		list.getFilesSorted().forEach(f -> System.out.println(f));
 		assertEquals(2, list.getFiles().size());
 		assertEquals(2, list.getFilesSorted().size());
+	}
+
+	@Test
+	public void testPersistedPlayingListAppendExistingFiles() {
+		final File file1 = new File("file1.ogg").getAbsoluteFile();
+		final File file2 = new File("file2.ogg").getAbsoluteFile();
+		final File file3 = new File("file3.ogg").getAbsoluteFile();
+		final File file4 = new File("file4.ogg").getAbsoluteFile();
+		
+		EditablePlaylist editablePlaylist = playlistService.createNewPlaylist("_", true);
+		PersistableAudioPlayingList list = new PersistableAudioPlayingList(editablePlaylist);
+		list.appendFiles(Set.of(file1, file3, file4));
+		assertEquals(List.of(file1, file3, file4), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
+		
+		list.appendFiles(Set.of(file1, file2, file3));
+		assertEquals(List.of(file4, file1, file2, file3), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
+		
+		list.removeAll();
+		assertTrue(list.getFiles().isEmpty());
+		
+		list.appendFiles(Set.of(file1, file3, file4));
+		Optional<EditablePlaylistFile> ef3 = list.getFile(file3);
+		assertTrue(ef3.isPresent());
+		list.setStartFile(ef3.get());
+		assertEquals(file3, list.getStartFile().orElse(null));
+		list.appendFilesAfterCurrent(Set.of(file1, file2, file3));
+		assertEquals(List.of(file3, file1, file2, file4), list.getFilesSorted().stream().map(EditablePlaylistFile::getFile).toList());
 	}
 	
 	@Test
