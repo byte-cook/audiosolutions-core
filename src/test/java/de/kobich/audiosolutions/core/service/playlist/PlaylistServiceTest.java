@@ -132,6 +132,11 @@ public class PlaylistServiceTest {
 		assertEquals(1, playlistRepository.count());
 		assertEquals(1, playlistFolderRepository.count());
 		assertEquals(1, playlistFileRepository.count());
+		ep.removeAll();
+		playlistService.savePlaylist(ep, null);
+		assertEquals(1, playlistRepository.count());
+		assertEquals(0, playlistFolderRepository.count());
+		assertEquals(0, playlistFileRepository.count());
 	}
 	
 	@Test
@@ -163,7 +168,7 @@ public class PlaylistServiceTest {
 	public void testPropertyChangeSupport() throws AudioException {
 		final TestPropertyChangeListener listener = new TestPropertyChangeListener();
 		EditablePlaylist ep = playlistService.createNewPlaylist("test", false);
-		ep.getSupport().addPropertyChangeListener(listener);
+		ep.getPropertyChangeSupport().addPropertyChangeListener(listener);
 		
 		ep.setName("dummy");
 		assertEquals(1, listener.count);
@@ -193,6 +198,14 @@ public class PlaylistServiceTest {
 		assertEquals(1, playlistRepository.count());
 		assertEquals(1, playlistFolderRepository.count());
 		assertEquals(1, playlistFileRepository.count());
+	}
+	
+	@Test
+	public void testAppendFilesAfter() throws AudioException {
+		EditablePlaylist ep = playlistService.createNewPlaylist("list 1", true);
+		// file3 is not in the playlist
+		ep.appendFilesAfter(Set.of(file1, file2), new EditablePlaylistFile(file3.getName(), null, file3, 0));
+		assertEquals(2, ep.getAllFiles().size());
 	}
 	
 	@Test
