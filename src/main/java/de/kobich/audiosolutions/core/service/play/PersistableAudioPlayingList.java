@@ -1,5 +1,6 @@
 package de.kobich.audiosolutions.core.service.play;
 
+import java.beans.PropertyChangeSupport;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import de.kobich.audiosolutions.core.service.playlist.EditablePlaylist;
 import de.kobich.audiosolutions.core.service.playlist.EditablePlaylistFile;
 import de.kobich.audiosolutions.core.service.playlist.EditablePlaylistFileComparator;
 import de.kobich.audiosolutions.core.service.playlist.EditablePlaylistFolder;
+import de.kobich.audiosolutions.core.service.playlist.PlaylistService;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -19,6 +21,7 @@ import lombok.Setter;
 /**
  * The list of files to play.
  * The files in the list can be saved in the database.
+ * @see PlaylistService
  */
 @RequiredArgsConstructor
 public class PersistableAudioPlayingList implements IAudioPlayinglist {
@@ -29,6 +32,10 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	@Setter
 	@Getter
 	private boolean loopEnabled;
+	
+	public PropertyChangeSupport getPropertyChangeSupport() {
+		return this.playlist.getPropertyChangeSupport();
+	}
 	
 	/**
 	 * Returns all files in the root folder
@@ -43,6 +50,7 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	
 	/**
 	 * Returns all files in the root folder as sorted list
+	 * @return
 	 */
 	public synchronized List<EditablePlaylistFile> getFilesSorted() {
 		Set<EditablePlaylistFile> allFiles = getFiles();
@@ -53,6 +61,16 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 	
 	public synchronized boolean isEmpty() {
 		return getFiles().isEmpty();
+	}
+	
+	public synchronized Optional<EditablePlaylistFile> getFile(File file) {
+		Set<EditablePlaylistFile> files = getFiles();
+		for (EditablePlaylistFile f : files) {
+			if (f.getFile().equals(file)) {
+				return Optional.of(f);
+			}
+		}
+		return Optional.empty();
 	}
 	
 	public synchronized Set<EditablePlaylistFile> appendFiles(Set<File> files) {
@@ -74,6 +92,10 @@ public class PersistableAudioPlayingList implements IAudioPlayinglist {
 			modified |= playlist.remove(file);
 		}
 		return modified;
+	}
+	
+	public synchronized boolean removeAll() {
+		return playlist.removeAll();
 	}
 	
 	public synchronized void setStartFile(@Nullable EditablePlaylistFile file) {
