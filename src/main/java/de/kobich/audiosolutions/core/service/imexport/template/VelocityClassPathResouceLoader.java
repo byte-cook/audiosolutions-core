@@ -10,15 +10,6 @@ import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 
 public class VelocityClassPathResouceLoader extends ClasspathResourceLoader {
 
-	/* (non-Javadoc)
-	 * @see org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader#getResourceStream(java.lang.String)
-	 */
-//	@Override
-	// TODO remove?
-	public InputStream getResourceStream(String name) throws ResourceNotFoundException {
-		return VelocityClassPathResouceLoader.class.getResourceAsStream(name);
-	}
-	
 	@Override
     public Reader getResourceReader(String name, String encoding)
             throws ResourceNotFoundException {

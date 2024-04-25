@@ -51,7 +51,7 @@ public class RenameAttributeProvider implements IRenameAttributeProvider {
 					AudioData audioData = fileDescriptor.getMetaData(AudioData.class);
 					AudioAttribute audioAttribute = md.getAttribute();
 					if (audioData.hasAttribute(audioAttribute)) {
-						return audioData.getAttribute(audioAttribute);
+						return audioData.getAttribute(audioAttribute, String.class);
 					}
 				}
 				return "";
@@ -60,10 +60,9 @@ public class RenameAttributeProvider implements IRenameAttributeProvider {
 					AudioData audioData = fileDescriptor.getMetaData(AudioData.class);
 					AudioAttribute audioAttribute = md.getAttribute();
 					if (audioData.hasAttribute(audioAttribute)) {
-						String value = audioData.getAttribute(audioAttribute);
+						Integer no = audioData.getAttribute(audioAttribute, Integer.class);
 						// use at least 2 characters (add leading zero if required)
-						value = StringUtils.leftPad(value, 2, '0');
-						return value;
+						return StringUtils.leftPad(String.valueOf(no), 2, '0');
 					}
 				}
 				return "";

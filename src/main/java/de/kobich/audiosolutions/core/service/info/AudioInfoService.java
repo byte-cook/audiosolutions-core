@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
-import de.kobich.audiosolutions.core.service.AudioAttribute;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.cddb.AudioCDDBService;
@@ -63,10 +62,10 @@ public class AudioInfoService {
 
 					if (file.hasMetaData(AudioData.class)) {
 						AudioData audioData = file.getMetaData(AudioData.class);
-						String artist = audioData.getAttribute(AudioAttribute.ARTIST);
-						String album = audioData.getAttribute(AudioAttribute.ALBUM);
+						String artist = audioData.getArtistIfNotDefault().orElse(null);
+						String album = audioData.getAlbumIfNotDefault().orElse(null);
 
-						if (StringUtils.isNotBlank(artist) && !AudioData.DEFAULT_VALUE.equals(artist) && StringUtils.isNotBlank(album) && !AudioData.DEFAULT_VALUE.equals(album)) {
+						if (StringUtils.isNotBlank(artist) && StringUtils.isNotBlank(album)) {
 							File frontCover = getFrontCoverFile(artist, album, coverArtRootDir);
 							if (frontCover.exists()) {
 								return Optional.of(new FileInfo(file, frontCover, null));

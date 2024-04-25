@@ -9,7 +9,7 @@ import java.util.Set;
 
 import javax.xml.stream.XMLStreamException;
 
-import de.kobich.audiosolutions.core.service.AudioAttribute;
+import de.kobich.audiosolutions.core.service.AlbumIdentity;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.AudioFileDescriptorComparator;
@@ -93,14 +93,14 @@ public abstract class AbstractNormalizer implements IAudioNormalizer {
 			String category = "";
 			if (fileDescriptor.hasMetaData(AudioData.class)) {
 				AudioData audioData = fileDescriptor.getMetaData(AudioData.class);
-				if (audioData.hasAttribute(AudioAttribute.ARTIST)) {
-					category += audioData.getAttribute(AudioAttribute.ARTIST);
+				if (audioData.getAlbum().isPresent()) {
+					category += audioData.getAlbum().get();
 				}
-				if (audioData.hasAttribute(AudioAttribute.ALBUM)) {
-					category += audioData.getAttribute(AudioAttribute.ALBUM);
+				if (audioData.getAlbumIdentifier().flatMap(AlbumIdentity::getPersistentId).isPresent()) {
+					category += audioData.getAlbumIdentifier().flatMap(AlbumIdentity::getPersistentId).get().toString();
 				}
-				if (audioData.hasAttribute(AudioAttribute.DISK)) {
-					category += audioData.getAttribute(AudioAttribute.DISK);
+				if (audioData.getDisk().isPresent()) {
+					category += audioData.getDisk().get();
 				}
 			}
 

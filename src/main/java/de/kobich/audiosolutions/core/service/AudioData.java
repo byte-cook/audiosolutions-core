@@ -8,6 +8,7 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import javax.annotation.Nullable;
 
@@ -32,6 +33,7 @@ public class AudioData implements IMetaData {
 	public static final String AUDIO_ATTRIBUTE_PROP = "audioAttribute";
 	public static final String AUDIO_STATE_PROP = "audioState";
 	public static final String DEFAULT_VALUE = "?";
+	private static final Predicate<String> NOT_DEFAULT_PREDICATE = s -> !s.equals(DEFAULT_VALUE);
 	private PropertyChangeSupport support;
 	private Long trackId;
 	private Map<AudioAttribute, String> attributes;
@@ -166,7 +168,8 @@ public class AudioData implements IMetaData {
 	 * @param attribute the attribute, must not be null
 	 * @param value the value, must not be null
 	 */
-	public void setAttribute(AudioAttribute attribute, String value) {
+	@Deprecated
+	private void setAttribute(AudioAttribute attribute, String value) {
 		if (value != null) {
 //			Object obj = AudioAttributeUtils.getObjectValue(value, attribute.getType());
 //			if (obj == null) {
@@ -261,6 +264,9 @@ public class AudioData implements IMetaData {
 	public Optional<String> getMedium() {
 		return Optional.ofNullable(getAttribute(AudioAttribute.MEDIUM));
 	}
+	public Optional<String> getMediumIfNotDefault() {
+		return getMedium().filter(AudioData.NOT_DEFAULT_PREDICATE);
+	}
 
 	private void setArtist(String artist) {
 		this.setAttribute(AudioAttribute.ARTIST, artist);
@@ -268,12 +274,18 @@ public class AudioData implements IMetaData {
 	public Optional<String> getArtist() {
 		return Optional.ofNullable(getAttribute(AudioAttribute.ARTIST));
 	}
+	public Optional<String> getArtistIfNotDefault() {
+		return getArtist().filter(AudioData.NOT_DEFAULT_PREDICATE);
+	}
 
 	private void setAlbum(String album) {
 		this.setAttribute(AudioAttribute.ALBUM, album);
 	}
 	public Optional<String> getAlbum() {
 		return Optional.ofNullable(getAttribute(AudioAttribute.ALBUM));
+	}
+	public Optional<String> getAlbumIfNotDefault() {
+		return getAlbum().filter(AudioData.NOT_DEFAULT_PREDICATE);
 	}
 
 	private void setAlbumPublication(Date albumPublication) {
@@ -304,6 +316,9 @@ public class AudioData implements IMetaData {
 	public Optional<String> getTrack() {
 		return Optional.ofNullable(getAttribute(AudioAttribute.TRACK));
 	}
+	public Optional<String> getTrackIfNotDefault() {
+		return getTrack().filter(AudioData.NOT_DEFAULT_PREDICATE);
+	}
 
 	private void setTrackNo(int trackNo) {
 		this.setAttribute(AudioAttribute.TRACK_NO, String.valueOf(trackNo));
@@ -324,6 +339,9 @@ public class AudioData implements IMetaData {
 	}
 	public Optional<String> getGenre() {
 		return Optional.ofNullable(getAttribute(AudioAttribute.GENRE));
+	}
+	public Optional<String> getGenreIfNotDefault() {
+		return getGenre().filter(AudioData.NOT_DEFAULT_PREDICATE);
 	}
 
 	private void setRating(RatingType rating) {

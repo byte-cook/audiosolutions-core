@@ -19,8 +19,6 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 
 import de.kobich.audiosolutions.core.service.AlbumIdentity;
-import de.kobich.audiosolutions.core.service.AudioAttribute;
-import de.kobich.audiosolutions.core.service.AudioAttributeUtils;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.audiosolutions.core.service.AudioException;
 import de.kobich.audiosolutions.core.service.RatingType;
@@ -305,17 +303,15 @@ public class AudioEntityCache {
 		track.setDiskName(audioData.getDisk().orElse(null));
 		track.setFilePath(filePath);
 		track.setFilePathOnMedium(filePathOnMedium);
-		track.setFormat(audioData.getAttribute(AudioAttribute.TRACK_FORMAT));
+		track.setFormat(audioData.getTrackFormat().orElse(null));
 		// track no
-		String trackNoString = audioData.getAttribute(AudioAttribute.TRACK_NO);
-		Integer trackNo = AudioAttributeUtils.convert2Integer(trackNoString);
+		Integer trackNo = audioData.getTrackNo().orElse(null);
 		if (trackNo != null) {
 			track.setNo(trackNo);
 		}
 		// rating
-		String ratingTypeString = audioData.getAttribute(AudioAttribute.RATING);
-		if (ratingTypeString != null) {
-			RatingType ratingType = AudioAttributeUtils.convert2RatingType(ratingTypeString);
+		RatingType ratingType = audioData.getRating().orElse(null);
+		if (ratingType != null) {
 			track.setRating(ratingType);
 		}
 		return trackRepository.save(track);

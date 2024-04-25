@@ -2,13 +2,14 @@ package de.kobich.audiosolutions.core.service.clipboard;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import de.kobich.audiosolutions.core.service.AudioAttribute;
+import de.kobich.audiosolutions.core.service.AudioAttributeUtils;
 import de.kobich.audiosolutions.core.service.AudioData;
 import de.kobich.component.file.FileDescriptor;
 
@@ -33,30 +34,30 @@ public class AudioClipboardContentService {
 			String text = null;
 			switch (type) {
 				case TRACK:
-					text = getAudioContent(audioData, AudioAttribute.TRACK);
+					text = audioData.getTrackIfNotDefault().orElse(null);
 					break;
 				case ALBUM:
-					text = getAudioContent(audioData, AudioAttribute.ALBUM);
+					text = audioData.getAlbumIfNotDefault().orElse(null);
 					break;
 				case ALBUM_AND_PUBLICATION:
-					text = getAudioContent(audioData, AudioAttribute.ALBUM);
-					String publication = getAudioContent(audioData, AudioAttribute.ALBUM_PUBLICATION);
+					text = audioData.getAlbumIfNotDefault().orElse(null);
+					Date publication = audioData.getAlbumPublication().orElse(null);
 					if (publication != null) {
-						text += " (" + publication + ")";
+						text += " (" + AudioAttributeUtils.convert2String(publication) + ")";
 					}
 					break;
 				case ALBUM_AND_DISK:
-					text = getAudioContent(audioData, AudioAttribute.ALBUM);
-					String disk = getAudioContent(audioData, AudioAttribute.DISK);
+					text = audioData.getAlbumIfNotDefault().orElse(null);
+					String disk = audioData.getDisk().orElse(null);
 					if (disk != null) {
 						text += " (" + disk + ")";
 					}
 					break;
 				case ARTIST:
-					text = getAudioContent(audioData, AudioAttribute.ARTIST);
+					text = audioData.getArtistIfNotDefault().orElse(null);
 					break;
 				case MEDIUM:
-					text = getAudioContent(audioData, AudioAttribute.MEDIUM);
+					text = audioData.getMediumIfNotDefault().orElse(null);
 					break;
 				case RELATIVE_PATH:
 					text = fileDescriptor.getRelativePath();
@@ -76,26 +77,7 @@ public class AudioClipboardContentService {
 		Collections.sort(contentList);
 		
 		// convert to text
-		StringBuilder sb = new StringBuilder();
-		for (String text : contentList) {
-			if (sb.toString().isEmpty()) {
-				sb.append(text);
-			}
-			else {
-				sb.append(NEW_LINE);
-				sb.append(text);
-			}
-		}
-		return sb.toString();
+		return String.join(NEW_LINE, contentList);
 	}
 	
-	private String getAudioContent(AudioData audioData, AudioAttribute attribute) {
-		if (audioData != null && audioData.hasAttribute(attribute)) {
-			String value = audioData.getAttribute(attribute);
-			if (!AudioData.DEFAULT_VALUE.equals(value)) {
-				return value;
-			}
-		}
-		return null;
-	}
 }
