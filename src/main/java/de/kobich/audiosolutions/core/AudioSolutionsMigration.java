@@ -79,7 +79,7 @@ class AudioSolutionsMigration {
 //						URL sqlScriptUrl = AudioSolutionsMigration.class.getResource("/db/migration/migrate-8.0.sql");
 //						EncodedResource sqlScript = new EncodedResource(new PathResource(sqlScriptUrl.toURI()));
 //						ScriptUtils.executeSqlScript(connection, sqlScript);
-						return AudioSolutionsVersion.V9_0;
+						return AudioSolutionsVersion.V10_0;
 				}
 			}
 			catch (SQLException e) {
@@ -310,7 +310,11 @@ class AudioSolutionsMigration {
 
 	private static void shutdown(Connection connection) throws SQLException {
 		try (Statement stmt = connection.createStatement()) {
-			stmt.execute("SHUTDOWN");
+			// SHUTDOWN COMPACT: 
+			// This command rewrites the .data file that contains the information stored in CACHED tables and compacts it to its minimum size. 
+			// This command should be issued periodically, especially when lots of inserts, updates, or deletes have been performed on the cached tables. 
+			// Changes to the structure of the database, such as dropping or modifying populated CACHED tables or indexes also create large amounts of unused file space that can be reclaimed using this command.
+			stmt.execute("SHUTDOWN COMPACT");
 		}
 	}
 }
