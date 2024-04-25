@@ -235,7 +235,7 @@ public class AudioPersistenceServiceTest {
 		assertNotNull(file1077);
 		assertEquals(AudioState.TRANSIENT_INCOMPLETE, file1077.getMetaData(AudioData.class).getState());
 		
-		List<Album> albums = this.textSearchService.search("", COUNT, PROGRESS_MONITOR).getAlbums();
+		List<Album> albums = this.textSearchService.search("", COUNT).getAlbums();
 		assertEquals(1, albums.size());
 		assertTrue(albums.get(0).getArtist().isEmpty());
 	}
@@ -449,7 +449,7 @@ public class AudioPersistenceServiceTest {
 		Set<FileDescriptor> files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
-		AudioTextSearchResult result = this.textSearchService.search("album: best", 10, null);
+		AudioTextSearchResult result = this.textSearchService.search("album: best", 10);
 		assertEquals(1, result.getAlbums().size());
 		assertFalse(result.getAlbums().get(0).getArtist().isPresent());
 		
@@ -462,7 +462,7 @@ public class AudioPersistenceServiceTest {
 		files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
-		result = this.textSearchService.search("album: best", 10, null);
+		result = this.textSearchService.search("album: best", 10);
 		assertEquals(2, result.getAlbums().size());
 		Album album1 = result.getAlbums().get(0);
 		Album album2 = result.getAlbums().get(1);
@@ -485,7 +485,7 @@ public class AudioPersistenceServiceTest {
 		Set<FileDescriptor> files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
-		AudioTextSearchResult result = this.textSearchService.search("artist: stones", 10, null);
+		AudioTextSearchResult result = this.textSearchService.search("artist: stones", 10);
 		assertEquals(2, result.getAlbums().size());
 		assertTrue(result.getAlbums().get(0).getArtist().isPresent());
 		assertEquals("Rolling Stones", result.getAlbums().get(0).getArtist().get().getName());
@@ -502,7 +502,7 @@ public class AudioPersistenceServiceTest {
 		files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
-		result = this.textSearchService.search("artist: stones", 10, null);
+		result = this.textSearchService.search("artist: stones", 10);
 		assertEquals(1, result.getAlbums().size());
 		assertTrue(result.getAlbums().get(0).getArtist().isPresent());
 //		table track:
@@ -522,7 +522,7 @@ public class AudioPersistenceServiceTest {
 		files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(2, persistenceService.getCount(AudioAttribute.ALBUM));
-		result = this.textSearchService.search("artist: stones", 10, null);
+		result = this.textSearchService.search("artist: stones", 10);
 		assertEquals(2, result.getAlbums().size());
 		assertTrue(result.getAlbums().get(0).getArtist().isPresent());
 	}
@@ -541,7 +541,7 @@ public class AudioPersistenceServiceTest {
 		Set<FileDescriptor> files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
-		AudioTextSearchResult result = this.textSearchService.search("album: best", 10, null);
+		AudioTextSearchResult result = this.textSearchService.search("album: best", 10);
 		assertEquals(1, result.getAlbums().size());
 		assertTrue(result.getAlbums().get(0).getArtist().isPresent());
 
@@ -552,7 +552,7 @@ public class AudioPersistenceServiceTest {
 		files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		persistenceService.persist(files, PROGRESS_MONITOR);
 		assertEquals(1, persistenceService.getCount(AudioAttribute.ALBUM));
-		result = this.textSearchService.search("album: best", 10, null);
+		result = this.textSearchService.search("album: best", 10);
 		assertEquals(1, result.getAlbums().size());
 		assertFalse(result.getAlbums().get(0).getArtist().isPresent());
 	}
