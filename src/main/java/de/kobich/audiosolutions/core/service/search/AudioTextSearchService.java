@@ -15,7 +15,6 @@ import de.kobich.audiosolutions.core.service.persist.domain.Album;
 import de.kobich.audiosolutions.core.service.persist.domain.Artist;
 import de.kobich.audiosolutions.core.service.persist.domain.Track;
 import de.kobich.audiosolutions.core.service.persist.repository.TextSearchRepository;
-import de.kobich.commons.monitor.progress.IServiceProgressMonitor;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -28,7 +27,7 @@ public class AudioTextSearchService {
 	@Autowired
 	private final TextSearchRepository searchRepository;
 
-	public AudioTextSearchResult search(String input, int maxResults, IServiceProgressMonitor monitor) throws AudioException {
+	public AudioTextSearchResult search(String input, int maxResults) throws AudioException {
 		final AudioTextSearchTokens tokens = tokenizerService.tokenize(input);
 		logger.info(String.format("Input: <%s> -> Tokens: %s", input, tokens));
 		
@@ -49,7 +48,7 @@ public class AudioTextSearchService {
 		return new AudioTextSearchResult(artists, albums, tracks);
 	}
 	
-	public AudioTextSearchResult searchSimultaneously(String input, int maxResults, IServiceProgressMonitor monitor) throws AudioException {
+	public AudioTextSearchResult searchSimultaneously(String input, int maxResults) throws AudioException {
 		final AudioTextSearchTokens tokens = tokenizerService.tokenize(input);
 		logger.info(String.format("Input: <%s> -> Tokens: %s", input, tokens));
 		StopWatch completeWatch = new StopWatch();
@@ -96,7 +95,7 @@ public class AudioTextSearchService {
 		
 	}
 
-	public List<Artist> searchArtists(String input, int maxResults, IServiceProgressMonitor monitor) throws AudioException {
+	public List<Artist> searchArtists(String input, int maxResults) throws AudioException {
 		final AudioTextSearchTokens tokens = tokenizerService.tokenize(input);
 		logger.info(String.format("Input: <%s> -> Tokens: %s", input, tokens));
 
@@ -107,7 +106,7 @@ public class AudioTextSearchService {
 		return artists;
 	}
 
-	public List<Album> searchAlbums(String input, int maxResults, IServiceProgressMonitor monitor) throws AudioException {
+	public List<Album> searchAlbums(String input, int maxResults) throws AudioException {
 		final AudioTextSearchTokens tokens = tokenizerService.tokenize(input);
 		logger.info(String.format("Input: <%s> -> Tokens: %s", input, tokens));
 
@@ -118,7 +117,7 @@ public class AudioTextSearchService {
 		return albums;
 	}
 
-	public List<Track> searchTracks(String input, int maxResults, IServiceProgressMonitor monitor) throws AudioException {
+	public List<Track> searchTracks(String input, int maxResults) throws AudioException {
 		final AudioTextSearchTokens tokens = tokenizerService.tokenize(input);
 		logger.info(String.format("Input: <%s> -> Tokens: %s", input, tokens));
 

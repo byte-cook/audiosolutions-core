@@ -87,13 +87,13 @@ public class AudioTextSearchServiceTest {
 	public void findArtists() throws AudioException {
 		List<String> stones = List.of("artist:rolli", "artist: roll", "artist  : ston", "track: start", "stones", "track: sympa", "ston track: sympath", "genre : rock", "genre:rock", "medium: cd");
 		for (String input : stones) {
-			AudioTextSearchResult res = textSearchService.search(input, 10, PROGRESS_MONITOR);
+			AudioTextSearchResult res = textSearchService.search(input, 10);
 			assertFalse(res.getArtists().isEmpty(), input);
 			assertEquals(TestUtils.STONES, res.getArtists().stream().filter(a -> TestUtils.STONES.equals(a.getName())).findFirst().get().getName(), input);
 		}
-		assertEquals(11, textSearchService.search("", 11, PROGRESS_MONITOR).getArtists().size());
+		assertEquals(11, textSearchService.search("", 11).getArtists().size());
 		
-		AudioTextSearchResult res = textSearchService.search("", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("", 10);
 		assertFalse(res.getArtists().isEmpty());
 		res.getArtists().forEach(a -> System.out.println(a));
 		assertEquals(10, res.getArtists().size());
@@ -101,11 +101,11 @@ public class AudioTextSearchServiceTest {
 	
 	@Test
 	public void findNotArtists() throws AudioException {
-		AudioTextSearchResult res = textSearchService.search("-artist:rolli", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("-artist:rolli", 10);
 		assertFalse(res.getArtists().isEmpty());
 		assertTrue(res.getArtists().stream().filter(a -> TestUtils.STONES.equals(a.getName())).findFirst().isEmpty());
 
-		res = textSearchService.search("-artist: stones track:the", 10, PROGRESS_MONITOR);
+		res = textSearchService.search("-artist: stones track:the", 10);
 		assertEquals(2, res.getArtists().size());
 		List<String> artistNames = res.getArtists().stream().map(Artist::getName).toList();
 		assertTrue(artistNames.contains("George Thorogood"));
@@ -114,25 +114,25 @@ public class AudioTextSearchServiceTest {
 	
 	@Test
 	public void findAlbums() throws AudioException {
-		List<String> stones = List.of("artist:rolli", "artist: roll", "artist  : ston", "tattoo", " \"tattoo you\"", "track: start", "artist: stones", "track: me up", "ston album:tatt", "genre : rock", "genre:rock");
+		List<String> stones = List.of("artist:rolli", "artist: roll", "artist  : ston", "tattoo", " \"tattoo you\"", "track: \"start", "artist: stones", "track: me up", "ston album:tatt", "genre : rock", "genre:rock");
 		for (String input : stones) {
-			AudioTextSearchResult res = textSearchService.search(input, 10, PROGRESS_MONITOR);
+			AudioTextSearchResult res = textSearchService.search(input, 10);
 			assertFalse(res.getAlbums().isEmpty(), input);
 			List<String> albumNames = res.getAlbums().stream().map(Album::getName).toList();
 			assertTrue(albumNames.contains("Tattoo You"), input);
 		}
-		AudioTextSearchResult res = textSearchService.search("", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("", 10);
 		assertFalse(res.getAlbums().isEmpty());
 		assertEquals(10, res.getAlbums().size());
 	}
 	
 	@Test
 	public void findNotAlbums() throws AudioException {
-		AudioTextSearchResult res = textSearchService.search("stones -album:tattoo", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("stones -album:tattoo", 10);
 		assertFalse(res.getAlbums().isEmpty());
 		assertEquals(AudioData.DEFAULT_VALUE, res.getAlbums().get(0).getName());
 
-		res = textSearchService.search("-album: best ACDC", 10, PROGRESS_MONITOR);
+		res = textSearchService.search("-album: best ACDC", 10);
 		assertEquals(1, res.getAlbums().size());
 		assertEquals(AudioData.DEFAULT_VALUE, res.getAlbums().get(0).getName());
 	}
@@ -141,33 +141,33 @@ public class AudioTextSearchServiceTest {
 	public void findTracks() throws AudioException {
 		List<String> stones = List.of("artist:rolli", "artist: roll", "artist  : ston", "track: motel", "artist:stones", "mem mo", "ston track:mem", "artist:ston mem", "genre : rock", "genre:rock", "medium: cd");
 		for (String input : stones) {
-			AudioTextSearchResult res = textSearchService.search(input, 10, PROGRESS_MONITOR);
+			AudioTextSearchResult res = textSearchService.search(input, 10);
 			assertFalse(res.getTracks().isEmpty(), input);
 			List<String> trackNames = res.getTracks().stream().map(Track::getName).toList();
 			assertTrue(trackNames.contains("memory motel"), input);
 		}
-		AudioTextSearchResult res = textSearchService.search("", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("", 10);
 		assertFalse(res.getTracks().isEmpty());
 		assertEquals(10, res.getTracks().size());
 	}
 	
 	@Test
 	public void findNotTracks() throws AudioException {
-		AudioTextSearchResult res = textSearchService.search("stones -track: \"start me up\" -track : symp", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("stones -track: \"start me up\" -track : symp", 10);
 		assertEquals(1, res.getTracks().size());
 		assertEquals("memory motel", res.getTracks().get(0).getName());
 	}
 	
 	@Test
 	public void findNotGenre() throws AudioException {
-		AudioTextSearchResult res = textSearchService.search("stones -genre:rock", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("stones -genre:rock", 10);
 		assertEquals(1, res.getTracks().size());
 		assertEquals("sympathy for the devil", res.getTracks().get(0).getName());
 	}
 	
 	@Test
 	public void findNotMedium() throws AudioException {
-		AudioTextSearchResult res = textSearchService.search("stones -medium:1", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("stones -medium:1", 10);
 		assertEquals(2, res.getTracks().size());
 		List<String> trackNames = res.getTracks().stream().map(Track::getName).toList();
 		assertTrue(trackNames.contains("sympathy for the devil"));
@@ -176,7 +176,7 @@ public class AudioTextSearchServiceTest {
 
 	@Test
 	public void testOpenResult() throws AudioException {
-		List<Album> albums = textSearchService.searchAlbums("artist : beatles best of", 10, PROGRESS_MONITOR);
+		List<Album> albums = textSearchService.searchAlbums("artist : beatles best of", 10);
 		assertEquals(1, albums.size());
 		
 		AudioSearchQuery query = AudioSearchQuery.builder().albumId(albums.get(0).getId()).build();
@@ -188,18 +188,18 @@ public class AudioTextSearchServiceTest {
 	@Test
 	public void testPerformance() throws AudioException {
 		// call once to init caches
-		textSearchService.search("roll track: sympat", 10, PROGRESS_MONITOR);
+		textSearchService.search("roll track: sympat", 10);
 		
 		StopWatch watch = new StopWatch();
 		watch.start();
-		AudioTextSearchResult res = textSearchService.search("roll track: sympat", 10, PROGRESS_MONITOR);
+		AudioTextSearchResult res = textSearchService.search("roll track: sympat", 10);
 		watch.stop();
 		System.out.println("Method search() takes: " + watch.getTime(TimeUnit.MILLISECONDS));
 		assertEquals(1, res.getTracks().size());
 		watch.reset();
 		
 		watch.start();
-		res = textSearchService.searchSimultaneously("roll track: sympat", 10, PROGRESS_MONITOR);
+		res = textSearchService.searchSimultaneously("roll track: sympat", 10);
 		watch.stop();
 		System.out.println("Method searchSimultaneously() takes: " + watch.getTime(TimeUnit.MILLISECONDS));
 		assertEquals(1, res.getTracks().size());
@@ -216,7 +216,7 @@ public class AudioTextSearchServiceTest {
 				try {
 					StopWatch threadWatch = new StopWatch();
 					threadWatch.start();
-					List<Artist> artists = textSearchService.searchSimultaneously("roll sympa", 20, null).getArtists();
+					List<Artist> artists = textSearchService.searchSimultaneously("roll sympa", 20).getArtists();
 					System.out.println(index + ": " + artists);
 					System.out.println("Thread " + index + " takes: " + threadWatch.getTime(TimeUnit.MILLISECONDS));
 				}

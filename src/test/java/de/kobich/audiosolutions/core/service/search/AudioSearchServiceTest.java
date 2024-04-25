@@ -133,6 +133,18 @@ public class AudioSearchServiceTest {
 	}
 
 	@Test
+	public void findByText() throws AudioException {
+		Set<FileDescriptor> stones = searchService.searchByText("stones", AudioAttribute.ARTIST, PROGRESS_MONITOR);
+		assertEquals(3, stones.size());
+		
+		Set<FileDescriptor> best = searchService.searchByText("Best", AudioAttribute.ALBUM, PROGRESS_MONITOR);
+		assertEquals(2, best.size());
+
+		Set<FileDescriptor> me = searchService.searchByText("me", AudioAttribute.TRACK, PROGRESS_MONITOR);
+		assertEquals(2, me.size());
+	}
+	
+	@Test
 	public void find() {
 		Set<FileDescriptor> rolli = searchService.search(AudioSearchQuery.builder().artistName("rolli").build(), PROGRESS_MONITOR);
 		TestUtils.printFileDescriptors(rolli);

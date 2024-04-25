@@ -58,6 +58,8 @@ public class AudioSearchService {
 	private GenreRepository genreRepository;
 	@Autowired
 	private MediumRepository mediumRepository;
+	@Autowired
+	private AudioTextSearchService textSearchService;
 	
 	/**
 	 * Searches for tracks
@@ -91,12 +93,39 @@ public class AudioSearchService {
 		ProgressSupport progressSupport = new ProgressSupport(monitor);
 		progressSupport.monitorBeginTask("Searching tracks...");
 		
-		List<Track> tracks = trackRepository.findByArtist(artistNames);
+		List<Track> tracks = trackRepository.findByArtistNames(artistNames);
 		Set<FileDescriptor> fileDescriptors = convertTracks(tracks, progressSupport);
 		
 		// monitor end
 		progressSupport.monitorEndTask("Searching finished");
 		
+		return fileDescriptors;
+	}
+
+	public Set<FileDescriptor> searchByText(String text, AudioAttribute attribute, IServiceProgressMonitor monitor) throws AudioException {
+		ProgressSupport progressSupport = new ProgressSupport(monitor);
+		progressSupport.monitorBeginTask("Searching tracks...");
+
+		List<Track> foundedTracks;
+		switch (attribute) {
+			case ARTIST:
+				List<Artist> artists = textSearchService.searchArtists(text, Integer.MAX_VALUE);
+				foundedTracks = trackRepository.findByArtists(new HashSet<>(artists));
+				break;
+			case ALBUM:
+				List<Album> albums = textSearchService.searchAlbums(text, Integer.MAX_VALUE);
+				foundedTracks = trackRepository.findByAlbums(new HashSet<>(albums));
+				break;
+			case TRACK:
+				List<Track> tracks = textSearchService.searchTracks(text, Integer.MAX_VALUE);
+				foundedTracks = trackRepository.findByTracks(new HashSet<>(tracks));
+				break;
+			default:
+				throw new IllegalStateException("Illegal attribute: " + attribute);
+		}
+		Set<FileDescriptor> fileDescriptors = convertTracks(foundedTracks, progressSupport);
+		
+		progressSupport.monitorEndTask("Searching finished");
 		return fileDescriptors;
 	}
 
@@ -113,7 +142,7 @@ public class AudioSearchService {
 		ProgressSupport progressSupport = new ProgressSupport(monitor);
 		progressSupport.monitorBeginTask("Searching tracks...");
 		
-		List<Track> tracks = trackRepository.findByMedium(mediumNames);
+		List<Track> tracks = trackRepository.findByMediumNames(mediumNames);
 		Set<FileDescriptor> fileDescriptors = convertTracks(tracks, progressSupport);
 		
 		// monitor end

@@ -12,6 +12,7 @@ import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.kobich.audiosolutions.core.service.persist.domain.Album;
 import de.kobich.audiosolutions.core.service.persist.domain.Artist;
 import de.kobich.audiosolutions.core.service.persist.domain.Medium;
 import de.kobich.audiosolutions.core.service.persist.domain.Track;
@@ -34,12 +35,25 @@ public interface TrackRepository extends ListCrudRepository<Track, Long> { //, L
 	@Transactional(readOnly = true)
 	Optional<Track> findFirstByFilePath(String filePath);
 	
+	@Transactional(readOnly = true)
 	@Query("SELECT t FROM Track t WHERE t.artist.name IN (:artistNames)")
-	List<Track> findByArtist(@Param("artistNames") Set<String> artistNames);
+	List<Track> findByArtistNames(@Param("artistNames") Set<String> artistNames);
 	
+	@Transactional(readOnly = true)
 	@Query("SELECT t FROM Track t WHERE t.album.medium.name IN (:mediumNames)")
-	List<Track> findByMedium(@Param("mediumNames") Set<String> mediumNames);
+	List<Track> findByMediumNames(@Param("mediumNames") Set<String> mediumNames);
 	
+	@Transactional(readOnly = true)
+	@Query("SELECT t FROM Track t WHERE t.artist IN (:artists)")
+	List<Track> findByArtists(@Param("artists") Set<Artist> artists);
+	@Transactional(readOnly = true)
+	@Query("SELECT t FROM Track t WHERE t.album IN (:albums)")
+	List<Track> findByAlbums(@Param("albums") Set<Album> albums);
+	@Transactional(readOnly = true)
+	@Query("SELECT t FROM Track t WHERE t IN (:tracks)")
+	List<Track> findByTracks(@Param("tracks") Set<Track> tracks);
+	
+	@Transactional(readOnly = true)
 	<T> List<T> findAllByNameLikeIgnoreCaseOrderByName(String name, Class<T> type);
 	
 	@Transactional(readOnly = true)
