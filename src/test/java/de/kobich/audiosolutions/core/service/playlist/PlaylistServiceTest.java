@@ -1,6 +1,7 @@
 package de.kobich.audiosolutions.core.service.playlist;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -176,6 +177,21 @@ public class PlaylistServiceTest {
 		assertEquals(2, listener.count);
 		ep.addFiles(Set.of(file1), folder);
 		assertEquals(3, listener.count);
+	}
+	
+	@Test
+	public void testPropertyChangeSupportEventIsSentAfterActualChange() throws AudioException {
+		final EditablePlaylist ep = playlistService.createNewPlaylist("test", false);
+		final PropertyChangeListener listener = evt -> {
+			if (evt.getNewValue() instanceof EditablePlaylistFolder) {
+				// ignore event for creating a new folder
+			}
+			else {
+				assertFalse(ep.getAllFiles().isEmpty());
+			}
+		};
+		ep.getPropertyChangeSupport().addPropertyChangeListener(listener);
+		ep.appendFiles(Set.of(file1));
 	}
 	
 	@Test

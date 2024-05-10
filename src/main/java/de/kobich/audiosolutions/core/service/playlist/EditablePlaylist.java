@@ -154,9 +154,9 @@ public class EditablePlaylist {
 		for (File file : files) {
 			EditablePlaylistFile pf = new EditablePlaylistFile(file.getName(), folder, file.getAbsoluteFile(), sortOrder);
 			newFiles.add(pf);
-			propertyChangeSupport.firePropertyChange(PROP_ADD, null, file);
 		}
 		folder.getModifiableFiles().addAll(newFiles);
+		propertyChangeSupport.firePropertyChange(PROP_ADD, null, newFiles);
 		return newFiles;
 	}
 	
