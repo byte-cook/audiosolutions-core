@@ -5,6 +5,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
@@ -109,7 +111,7 @@ public class AudioAttributeUtils {
 	 * Converts from date to string, e.g. for publication
 	 * @return
 	 */
-	public static String convert2String(Date date) {
+	public static String convert2String(@Nullable Date date) {
 		if (date != null) {
 			DateFormat parser = new SimpleDateFormat("yyyy-MM-dd");
 			return parser.format(date);
@@ -126,8 +128,11 @@ public class AudioAttributeUtils {
 		}
 	}
 	
-	public static String convert2String(int number) {
-		return "" + number;
+	public static String convert2String(@Nullable Integer number) {
+		if (number != null) {
+			return String.valueOf(number);
+		}
+		return null;
 	}
 	
 	public static AudioDataChangeBuilder setValueInBuilder(AudioDataChangeBuilder builder, AudioAttribute attribute, String value) {
