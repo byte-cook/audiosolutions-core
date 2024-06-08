@@ -51,6 +51,21 @@ public class FileID3TagServiceTest {
 	}
 
 	@Test
+	public void deleteTrackNo() throws AudioException {
+		Set<FileDescriptor> fileDescriptors = new HashSet<>();
+		fileDescriptors.add(new FileDescriptor(this.testFile, testFile));
+		id3TagService.writeSingleID3Tag(fileDescriptors, MP3ID3TagType.TRACK_NO, "1", ID3TagVersion.ALL, null);
+		ReadID3TagResponse res = id3TagService.readID3Tags(fileDescriptors, null);
+		Map<MP3ID3TagType, String> map = res.getSucceededFiles().values().iterator().next();
+		assertEquals("1", map.get(MP3ID3TagType.TRACK_NO));
+
+		id3TagService.writeSingleID3Tag(fileDescriptors, MP3ID3TagType.TRACK_NO, "", ID3TagVersion.ALL, null);
+		res = id3TagService.readID3Tags(fileDescriptors, null);
+		map = res.getSucceededFiles().values().iterator().next();
+		assertEquals("", map.get(MP3ID3TagType.TRACK_NO));
+	}
+
+	@Test
 	public void writeID3TagByAudioData() throws AudioException {
 		Set<FileDescriptor> fileDescriptors = new HashSet<>();
 		fileDescriptors.add(TestUtils.createFileDescriptor(this.testFile, AudioDataBuilder.builder().artist(TestUtils.STONES).album(TestUtils.BEGGARS_BANQUET).track(TestUtils.SYMPATHY_DEVIL).trackNo(1)));

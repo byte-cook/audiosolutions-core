@@ -300,12 +300,14 @@ public class FileID3TagServiceByJAudioTagger implements IFileID3TagService {
 						continue;
 					}
 					else if (FieldKey.TRACK.equals(fieldKey)) {
-						int no = NumberUtils.toInt(value2Set, -1);
-						if (no != -1) {
-							value2Set = String.valueOf(no);
-						}
-						else {
-							continue;
+						if (!value.isEmpty()) {
+							int no = NumberUtils.toInt(value2Set, -1);
+							if (no != -1) {
+								value2Set = String.valueOf(no);
+							}
+							else {
+								continue;
+							}
 						}
 					}
 					ensureID3v2Tags(fileDescriptor);
