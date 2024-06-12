@@ -205,6 +205,10 @@ public class AudioSearchService {
 	public Optional<Album> searchAlbum(Long albumId) {
 		return albumRepository.findById(albumId);
 	}
+	
+	public List<Album> searchAlbums(Iterable<Long> albumIds) {
+		return albumRepository.findAllById(albumIds);
+	}
 
 	/**
 	 * Searches for similar entity names depending on the audio attribute

@@ -6,7 +6,7 @@ import java.util.Set;
 
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.ListCrudRepository;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +15,7 @@ import de.kobich.audiosolutions.core.service.persist.domain.Album;
 import de.kobich.audiosolutions.core.service.persist.domain.Medium;
 
 @Transactional(propagation = Propagation.MANDATORY)
-public interface AlbumRepository extends CrudRepository<Album, Long> {
+public interface AlbumRepository extends ListCrudRepository<Album, Long> {
 	static interface AlbumName {
 		String getName();
 	}
