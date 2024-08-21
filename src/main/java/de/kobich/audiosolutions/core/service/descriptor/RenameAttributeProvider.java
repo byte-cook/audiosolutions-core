@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,7 +23,10 @@ import de.kobich.component.file.descriptor.IRenameAttributeProvider;
 public class RenameAttributeProvider implements IRenameAttributeProvider {
 	private static DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 	private final IFileID3TagService id3TagService;
+	@Nullable
 	private Map<MP3ID3TagType, String> id3Values;
+	@Nullable
+	private FileDescriptor id3Values4FileDescriptor;
 	
 	public RenameAttributeProvider(IFileID3TagService id3TagService) {
 		this.id3TagService = id3TagService;
@@ -98,12 +103,14 @@ public class RenameAttributeProvider implements IRenameAttributeProvider {
 	@Override
 	public synchronized void reload() {
 		this.id3Values = null;
+		this.id3Values4FileDescriptor = null;
 	}
 
 	private synchronized Map<MP3ID3TagType, String> getID3TagValues(FileDescriptor fileDescriptor) throws AudioException {
-		if (id3Values == null) {
+		if (id3Values == null || !this.id3Values4FileDescriptor.equals(fileDescriptor)) {
 			ReadID3TagResponse response = id3TagService.readID3Tags(Set.of(fileDescriptor), null);
-			id3Values = response.getSucceededFiles().getOrDefault(fileDescriptor, Map.of());
+			this.id3Values = response.getSucceededFiles().getOrDefault(fileDescriptor, Map.of());
+			this.id3Values4FileDescriptor = fileDescriptor;
 		}
 		return id3Values;
 	}

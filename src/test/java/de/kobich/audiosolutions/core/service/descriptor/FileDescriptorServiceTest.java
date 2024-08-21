@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -138,26 +139,43 @@ public class FileDescriptorServiceTest {
 	@Test
 	public void testRenameAttributeByID3() throws Exception {
 		File testFile = new File(FileID3TagServiceTest.class.getResource("/mp3/01-mp3-no-tags.mp3").toURI());
-		File targetFile = TestUtils.getOutputFile("file-rename-attribute", true, testFile);
-		Set<FileDescriptor> files = Set.of(new FileDescriptor(targetFile, targetFile));
-		id3TagService.writeSingleID3Tag(files, MP3ID3TagType.ARTIST, "Rolling Stones", ID3TagVersion.ALL, null);
-		id3TagService.writeSingleID3Tag(files, MP3ID3TagType.TRACK_NO, "1", ID3TagVersion.ALL, null);
+		File outputDir = TestUtils.getOutputDir("file-rename-attribute-id3", true);
+		File targetFile1 = new File(outputDir, "file1.mp3");
+		FileUtils.copyFile(testFile, targetFile1);
+		File targetFile2 = new File(outputDir, "file2.mp3");
+		FileUtils.copyFile(testFile, targetFile2);
+
+		FileDescriptor fd1 = new FileDescriptor(targetFile1, outputDir);
+		FileDescriptor fd2 = new FileDescriptor(targetFile2, outputDir);
+		id3TagService.writeSingleID3Tag(Set.of(fd1, fd2), MP3ID3TagType.ARTIST, "Rolling Stones", ID3TagVersion.ALL, null);
+		id3TagService.writeSingleID3Tag(Set.of(fd1), MP3ID3TagType.TRACK_NO, "1", ID3TagVersion.ALL, null);
+		id3TagService.writeSingleID3Tag(Set.of(fd2), MP3ID3TagType.TRACK_NO, "2", ID3TagVersion.ALL, null);
 		
 		final IRenameAttributeProvider attributeProvider = new RenameAttributeProvider(id3TagService);
-		Set<RenameFileDescriptor> fileRenameable = files.stream().map(f -> new RenameFileDescriptor(f, attributeProvider)).collect(Collectors.toSet());
-		String trackNo = RenameFileDescriptorAttributeType.ID3_TRACK_NO.getName();
-		String artist = RenameFileDescriptorAttributeType.ID3_ARTIST.getName();
+		Set<RenameFileDescriptor> fileRenameable = Set.of(fd1, fd2).stream().map(f -> new RenameFileDescriptor(f, attributeProvider)).collect(Collectors.toSet());
+		final String trackNo = RenameFileDescriptorAttributeType.ID3_TRACK_NO.getName();
+		final String artist = RenameFileDescriptorAttributeType.ID3_ARTIST.getName();
 		List<IRenameRule> rules = List.of(new SelectingByFileNameTypeRenameRule(RenameFileNameType.BASENAME), new AttributeRenameRule(trackNo + "-" + artist, Set.of(trackNo, artist)));
 		descriptionService.renameFiles(fileRenameable, rules, PROGRESS_MONITOR);
-		assertTrue(new File(targetFile.getParentFile(), "01-Rolling Stones.mp3").exists());
+		assertTrue(new File(outputDir, "01-Rolling Stones.mp3").exists());
+		assertTrue(new File(outputDir, "02-Rolling Stones.mp3").exists());
 	}
 
 	@Test
 	public void testRenameAttributeByAudioData() throws Exception {
 		File testFile = new File(FileID3TagServiceTest.class.getResource("/mp3/01-mp3-no-tags.mp3").toURI());
-		File targetFile = TestUtils.getOutputFile("file-rename-attribute", true, testFile);
+		File outputDir = TestUtils.getOutputDir("file-rename-attribute-audiodata", true);
+		File targetFile1 = new File(outputDir, "file1.mp3");
+		FileUtils.copyFile(testFile, targetFile1);
+		File targetFile2 = new File(outputDir, "file2.mp3");
+		FileUtils.copyFile(testFile, targetFile2);
+
+		FileDescriptor fd1 = new FileDescriptor(targetFile1, outputDir);
+		FileDescriptor fd2 = new FileDescriptor(targetFile2, outputDir);
 		Set<AudioDataChange> changes = Set.of(
-				AudioDataChange.builder().fileDescriptor(new FileDescriptor(targetFile, targetFile)).trackNo(1).artist("Rolling Stones").build());
+				AudioDataChange.builder().fileDescriptor(fd1).trackNo(1).artist("Rolling Stones").build(),
+				AudioDataChange.builder().fileDescriptor(fd2).trackNo(2).artist("Rolling Stones").build()
+				);
 		Set<FileDescriptor> files = dataService.applyChanges(changes, PROGRESS_MONITOR);
 		
 		final IRenameAttributeProvider attributeProvider = new RenameAttributeProvider(id3TagService);
@@ -166,7 +184,8 @@ public class FileDescriptorServiceTest {
 		String artist = RenameFileDescriptorAttributeType.AUDIO_ARTIST.getName();
 		List<IRenameRule> rules = List.of(new SelectingByFileNameTypeRenameRule(RenameFileNameType.BASENAME), new AttributeRenameRule(trackNo + "-" + artist, Set.of(trackNo, artist)));
 		descriptionService.renameFiles(fileRenameable, rules, PROGRESS_MONITOR);
-		assertTrue(new File(targetFile.getParentFile(), "01-Rolling Stones.mp3").exists());
+		assertTrue(new File(outputDir, "01-Rolling Stones.mp3").exists());
+		assertTrue(new File(outputDir, "02-Rolling Stones.mp3").exists());
 	}
 
 }
